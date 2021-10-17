@@ -1,0 +1,216 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="DDSTextureLoader.cpp">
+      <Filter>TextureLoading</Filter>
+    </ClCompile>
+    <ClCompile Include="DrawableGameObject.cpp">
+      <Filter>ObjectFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="DebugOutput.cpp">
+      <Filter>DebugSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Input\KeyBorad</Filter>
+    </ClCompile>
+    <ClCompile Include="KeyboardEvent.cpp">
+      <Filter>Input\KeyBorad</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse_Picking.cpp">
+      <Filter>Input\Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseEvent.cpp">
+      <Filter>Input\Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="MouseInput.cpp">
+      <Filter>Input\Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="InputControllor.cpp">
+      <Filter>Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Vector3.cpp">
+      <Filter>UsefullFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Application.cpp" />
+    <ClCompile Include="CameraController.cpp">
+      <Filter>Camera</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderController.cpp">
+      <Filter>Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="LightControll.cpp">
+      <Filter>Light</Filter>
+    </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>Light</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\imgui_widgets.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\imgui.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\imgui_demo.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\imgui_draw.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\imgui_tables.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\backends\imgui_impl_dx11.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui-master\backends\imgui_impl_win32.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiManager.cpp" />
+    <ClCompile Include="Appearance.cpp">
+      <Filter>ObjectFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Transform.cpp">
+      <Filter>ObjectFiles</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="main.h" />
+    <ClInclude Include="DDSTextureLoader.h">
+      <Filter>TextureLoading</Filter>
+    </ClInclude>
+    <ClInclude Include="DrawableGameObject.h">
+      <Filter>ObjectFiles</Filter>
+    </ClInclude>
+    <CLInclude Include="resource.h">
+      <Filter>UsefullFiles</Filter>
+    </CLInclude>
+    <ClInclude Include="structures.h">
+      <Filter>UsefullFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="DebugOutput.h">
+      <Filter>DebugSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Input\KeyBorad</Filter>
+    </ClInclude>
+    <ClInclude Include="KeyboardEvent.h">
+      <Filter>Input\KeyBorad</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse_Picking.h">
+      <Filter>Input\Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseEvent.h">
+      <Filter>Input\Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="MouseInput.h">
+      <Filter>Input\Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="InputControllor.h">
+      <Filter>Input</Filter>
+    </ClInclude>
+    <ClInclude Include="C++HelperFunctions.h">
+      <Filter>UsefullFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Quaternion.h">
+      <Filter>UsefullFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector3.h">
+      <Filter>UsefullFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Application.h" />
+    <ClInclude Include="CameraController.h">
+      <Filter>Camera</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderController.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="LightControll.h">
+      <Filter>Light</Filter>
+    </ClInclude>
+    <ClInclude Include="Light.h">
+      <Filter>Light</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui-master\imgui.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui-master\imgui_internal.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui-master\imconfig.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui-master\backends\imgui_impl_dx11.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui-master\backends\imgui_impl_win32.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiManager.h" />
+    <ClInclude Include="Appearance.h">
+      <Filter>ObjectFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>ObjectFiles</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="TextureLoading">
+      <UniqueIdentifier>{8559cfc0-4fb2-4cc1-882a-665f479f9ece}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ObjectFiles">
+      <UniqueIdentifier>{92ee4f30-345b-43f9-bf19-76091303f3aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UsefullFiles">
+      <UniqueIdentifier>{7a1c6962-2b6a-46ea-89be-13ab9e6d9517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Textures">
+      <UniqueIdentifier>{23134a45-c0c5-48f8-b18e-00ba7225553c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{46381d49-40c2-425b-94ba-1ba9a980903d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Camera">
+      <UniqueIdentifier>{66a4a0a3-ae89-4091-9908-bf5ccbd4941f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DebugSupport">
+      <UniqueIdentifier>{4f8ea30d-d60f-4c85-9f8e-110ed70b1236}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input">
+      <UniqueIdentifier>{70567b8f-71ea-4178-b6d1-4a666d59457f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input\KeyBorad">
+      <UniqueIdentifier>{2a616749-fcd5-43e8-951b-b0aa5db03233}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Input\Mouse">
+      <UniqueIdentifier>{9de25313-3d41-4dd7-8184-92e00d3db0e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Light">
+      <UniqueIdentifier>{98a9227b-549f-4898-8b76-2cc5d4f158cf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DImGUI">
+      <UniqueIdentifier>{35c5ace8-1db7-44b4-9237-ab9fbd7dc97b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Resources\stone.dds">
+      <Filter>Textures</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shader.fx">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Tutorial01.rc">
+      <Filter>UsefullFiles</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
