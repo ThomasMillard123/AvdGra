@@ -10,7 +10,12 @@ LightControll::~LightControll()
 
 Light_Data* LightControll::GetLight(string Name)
 {
-    return nullptr;
+    for (auto LightData : _pLightData) {
+        if (LightData->GetName() == Name) {
+            return LightData;
+      }
+    }
+  
 }
 
 Light_Data* LightControll::GetLight(int No)
@@ -52,4 +57,21 @@ void LightControll::draw(ID3D11DeviceContext* pContext)
     for (auto LightData : _pLightData) {
         LightData->draw(pContext);
     }
+}
+
+void LightControll::RemoveAllLights()
+{
+    for (int i = 0; i < _pLightData.size(); i++)
+    {
+        delete _pLightData[i];
+         _pLightData[i]=nullptr;
+    }
+
+    _pLightData.clear();
+
+}
+
+void LightControll::CleanUp()
+{
+    RemoveAllLights();
 }

@@ -21,7 +21,6 @@ public:
 
 	void cleanup();
 
-	//HRESULT								initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext);
 
 	void								update(float t, ID3D11DeviceContext* pContext);
 	void								draw(ID3D11DeviceContext* pContext);
@@ -29,33 +28,12 @@ public:
 	Appearance* GetAppearance() const { return _pApperance; }
 	Transform* GetTransfrom() const { return _pTransform; }
 
-	/*ID3D11Buffer*						getVertexBuffer() { return m_pVertexBuffer; }
-	ID3D11Buffer*						getIndexBuffer() { return m_pIndexBuffer; }
-	ID3D11ShaderResourceView**			getTextureResourceView() { return &m_pTextureResourceView; 	}
-	XMFLOAT4X4*							getTransform() { return &m_World; }
-	ID3D11SamplerState**				getTextureSamplerState() { return &m_pSamplerLinear; }
-	ID3D11Buffer*						getMaterialConstantBuffer() { return m_pMaterialConstantBuffer;}*/
-	/*void								setPosition(XMFLOAT3 position);*/
+
 
 private:
-	
-	//XMFLOAT4X4							m_World;
-
-	//ID3D11Buffer*						m_pVertexBuffer;
-	//ID3D11Buffer*						m_pIndexBuffer;
-	//ID3D11ShaderResourceView*			m_pTextureResourceView;
-	//ID3D11SamplerState *				m_pSamplerLinear;
-	//MaterialPropertiesConstantBuffer	m_material;
-	//ID3D11Buffer*						m_pMaterialConstantBuffer = nullptr;
-	//XMFLOAT3							m_position;
-
-
 
 	Transform* _pTransform;
 	Appearance* _pApperance;
-
-
-
 
 };
 

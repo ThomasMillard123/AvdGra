@@ -23,11 +23,12 @@ public:
 	void update(float t, ID3D11DeviceContext* pContext);
 	void draw(ID3D11DeviceContext* pContext);
 
-	
+	void RemoveAllLights();
 
 private:
 
 	vector<Light_Data*> _pLightData;
 
+	void CleanUp();
 };
 
