@@ -493,8 +493,8 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
-    _pLightContol->AddLight("A", true, LightType::PointLight, XMFLOAT4(0.0f, -10.0f, 0.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 1.0f, 1.0f, _pd3dDevice, _pImmediateContext);
-
+    _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+    _pLightContol->AddLight("Point", true, LightType::PointLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     return S_OK;
 }
 void Application::Update()
@@ -558,13 +558,10 @@ void Application::Draw()
     _GameObject.draw(_pImmediateContext);
 
 
-    //TODO Change this 
-    XMFLOAT4X4 WorldAsFloat1 = _pLightContol->GetLight(0)->GetLightObject()->GetTransfrom()->GetWorldMatrix();
-     mGO = XMLoadFloat4x4(&WorldAsFloat1);
-    cb1.mWorld = XMMatrixTranspose(mGO);
-    _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+  
+    
 
-    _pLightContol->draw(_pImmediateContext);
+    _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
 
     DimGuiManager->BeginRender();
@@ -612,9 +609,13 @@ float Application::calculateDeltaTime()
 void Application::setupLightForRender()
 {
   
+
+
+
         LightPropertiesConstantBuffer lightProperties;
         lightProperties.EyePosition = _pCamControll->GetCam(0)->GetPositionFloat4();
-        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();
+        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();;
+        lightProperties.Lights[1] = _pLightContol->GetLight(1)->GetLightData();
         _pImmediateContext->UpdateSubresource(_pLightConstantBuffer, 0, nullptr, &lightProperties, 0, 0);
 }
 

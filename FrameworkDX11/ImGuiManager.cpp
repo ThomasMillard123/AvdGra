@@ -96,7 +96,10 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
             GameObject->GetTransfrom()->SetRotation(rotationX, rotationY, rotationZ);
 
 
-            ImGui::SliderFloat3("Pos (X,Y,Z)", pos,-100,100);
+            ImGui::Text("Position");
+            ImGui::InputFloat("X", &pos[0]);
+            ImGui::InputFloat("Y", &pos[1]);
+            ImGui::InputFloat("Z", &pos[2]);
             GameObject->GetTransfrom()->SetPosition(pos[0], pos[1], pos[2]);
 
 
@@ -120,78 +123,143 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
 static float pos2[] = {0.0f,0.0f,0.0f};
 static float Dir[] = { 0.0f,0.0f,0.0f };
 static float Colour[] = { 0.0f,0.0f,0.0f,0.0f };
+static float attenuation[] = { 0.0f,0.0f,0.0f };
+static const char* current_item1 = NULL;
+static string name1;
+static bool enable;
+static bool Load2 = false;
 void ImGuiManager::LightControl(LightControll* LightControl)
 {
+
+    if (!Load2) {
+        name1 = LightControl->GetLight(0)->GetName();
+        current_item1 = name1.c_str();
+        Load2 = true;
+    }
+
     if (ImGui::Begin("Light Control", FALSE, ImGuiWindowFlags_AlwaysAutoResize))
     {
-        //if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-        //{
-        //    for (int n = 0; n < LightControl->().size(); n++)
-        //    {
-        //        bool is_selected = (current_item == Cams->GetCamList()[n]->GetCamName().c_str()); // You can store your selection however you want, outside or inside your objects
-        //        if (ImGui::Selectable(Cams->GetCamList()[n]->GetCamName().c_str(), is_selected)) {
+        if (ImGui::CollapsingHeader("contolls"))
+        {
+            if (ImGui::BeginCombo("##combo", current_item1)) // The second parameter is the label previewed before opening the combo.
+            {
+                for (int n = 0; n < LightControl->GetLightList().size(); n++)
+                {
+                    bool is_selected = (current_item1 == LightControl->GetLightList()[n]->GetName().c_str()); // You can store your selection however you want, outside or inside your objects
+                    if (ImGui::Selectable(LightControl->GetLightList()[n]->GetName().c_str(), is_selected)) {
 
-        //            name = Cams->GetCamList()[n]->GetCamName();
-        //            Cams->SetCam(n);
-        //            current_item = name.c_str();
-        //        }
-        //        if (is_selected) {
-        //            ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+                        name1 = LightControl->GetLightList()[n]->GetName().c_str();
 
-        //        }
+                        
 
-        //    }
-        //    ImGui::EndCombo();
-        //}
+                        current_item1 = name1.c_str();
+                    }
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
 
-       
+                    }
 
-        //ImGui::SliderFloat3("Pos (X,Y,Z)", pos, -100, 100);
+                }
+                ImGui::EndCombo();
+            }
 
-
-        pos2[0] = LightControl->GetLight(0)->GetLightData().Position.x;
-        pos2[1] = LightControl->GetLight(0)->GetLightData().Position.y;
-        pos2[2] = LightControl->GetLight(0)->GetLightData().Position.z;
-
-
-        Dir[0] = LightControl->GetLight(0)->GetLightData().Direction.x;
-        Dir[1] = LightControl->GetLight(0)->GetLightData().Direction.y;
-        Dir[2] = LightControl->GetLight(0)->GetLightData().Direction.z;
-
-        Colour[0] = LightControl->GetLight(0)->GetLightData().Color.x;
-        Colour[1] = LightControl->GetLight(0)->GetLightData().Color.y;
-        Colour[2] = LightControl->GetLight(0)->GetLightData().Color.z;
-        Colour[3] = LightControl->GetLight(0)->GetLightData().Color.w;
-
-        ImGui::InputFloat("X", &pos2[0]);
-        ImGui::InputFloat("Y", &pos2[1]);
-        ImGui::InputFloat("Z", &pos2[2]);
-
-        LightControl->GetLight(0)->setPos(XMFLOAT4(pos2[0], pos2[1], pos2[2], 0.0f));
+            pos2[0] = LightControl->GetLight(name1)->GetLightData().Position.x;
+            pos2[1] = LightControl->GetLight(name1)->GetLightData().Position.y;
+            pos2[2] = LightControl->GetLight(name1)->GetLightData().Position.z;
 
 
+            Dir[0] = LightControl->GetLight(name1)->GetLightData().Direction.x;
+            Dir[1] = LightControl->GetLight(name1)->GetLightData().Direction.y;
+            Dir[2] = LightControl->GetLight(name1)->GetLightData().Direction.z;
+
+            Colour[0] = LightControl->GetLight(name1)->GetLightData().Color.x;
+            Colour[1] = LightControl->GetLight(name1)->GetLightData().Color.y;
+            Colour[2] = LightControl->GetLight(name1)->GetLightData().Color.z;
+            Colour[3] = LightControl->GetLight(name1)->GetLightData().Color.w;
+
+
+            attenuation[0] = LightControl->GetLight(name1)->GetLightData().ConstantAttenuation;
+            attenuation[1] = LightControl->GetLight(name1)->GetLightData().LinearAttenuation;
+            attenuation[2] = LightControl->GetLight(name1)->GetLightData().QuadraticAttenuation;
+
+            ImGui::Text("Position");
+            ImGui::InputFloat("X", &pos2[0]);
+            ImGui::InputFloat("Y", &pos2[1]);
+            ImGui::InputFloat("Z", &pos2[2]);
+
+            LightControl->GetLight(name1)->setPos(XMFLOAT4(pos2[0], pos2[1], pos2[2], 0.0f));
+
+
+            enable = LightControl->GetLight(name1)->GetLightData().Enabled;
+            ImGui::Checkbox("Enabled", &enable);
+            LightControl->GetLight(name1)->SetEnabled(enable);
+
+            ImGui::Text("Direction");
+            ImGui::InputFloat("A", &Dir[0]);
+            ImGui::InputFloat("B", &Dir[1]);
+            ImGui::InputFloat("C", &Dir[2]);
+
+            LightControl->GetLight(0)->setDirection(XMFLOAT4(Dir[0], Dir[1], Dir[2], 0.0f));
+
+            ImGui::SliderFloat4("Colour (R,G,B,A)", Colour, 0, 1);
+            LightControl->GetLight(name1)->setColour(XMFLOAT4(Colour[0], Colour[1], Colour[2], Colour[3]));
 
 
 
-
-       /* ImGui::InputFloat("A", &Dir[0]);
-        ImGui::InputFloat("B", &Dir[1]);
-        ImGui::InputFloat("C", &Dir[2]);*/
-
-        //LightControl->GetLight(0)->setDirection(XMFLOAT4(Dir[0], Dir[1], Dir[2], 0.0f));
-
+            if (LightControl->GetLight(name1)->GetLightData().LightType == LightType::PointLight) {
+                ImGui::Text("attenuation");
+                ImGui::SliderFloat("Constant", &attenuation[0], 1.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat("Linear", &attenuation[1], 0.0f, 5.0f, "%.4f");
+                ImGui::SliderFloat("Quadratic", &attenuation[2], 0.0f, 2.0f, "%.7f");
 
 
+                LightControl->GetLight(name1)->SetAttenuation(attenuation[0], attenuation[1], attenuation[2]);
+            }
 
-        ImGui::SliderFloat4("Pos (R,G,B,A)", Colour, 0, 1);
-        LightControl->GetLight(0)->setColour(XMFLOAT4(Colour[0], Colour[1], Colour[2], Colour[3]));
+            if (ImGui::Button("Reset")) {
 
+              
+            }
 
-        if (ImGui::Button("Reset")) {
-           
         }
+        if (ImGui::CollapsingHeader("Add Light"))
+        {
+
+             /*float posNew[] = { 0.0f,0.0f,0.0f };
+             float DirNew[] = { 0.0f,0.0f,0.0f };
+             float ColourNew[] = { 0.0f,0.0f,0.0f,0.0f };
+             float attenuationNew[] = { 0.0f,0.0f,0.0f };
+
+            ImGui::Text("Position");
+            ImGui::InputFloat("X", &posNew[0]);
+            ImGui::InputFloat("Y", &posNew[1]);
+            ImGui::InputFloat("Z", &posNew[2]);
 
 
+            ImGui::Text("Direction");
+            ImGui::InputFloat("A", &DirNew[0]);
+            ImGui::InputFloat("B", &DirNew[1]);
+            ImGui::InputFloat("C", &DirNew[2]);
+
+          
+            ImGui::Text("Colour");
+            ImGui::InputFloat("A", &ColourNew[0]);
+            ImGui::InputFloat("B", &ColourNew[1]);
+            ImGui::InputFloat("C", &ColourNew[2]);
+            ImGui::InputFloat("C", &ColourNew[2]);
+
+            ImGui::Text("attenuation");
+            ImGui::SliderFloat("Constant", &attenuationNew[0], 0, 10);
+            ImGui::SliderFloat("Linear", &attenuationNew[1], 0, 5);
+            ImGui::SliderFloat("Quadratic", &attenuationNew[3], 0, 1);
+            
+
+
+            if (ImGui::Button("add")) {
+
+                
+            }*/
+        }
     }
     ImGui::End();
 }

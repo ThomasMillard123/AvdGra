@@ -54,7 +54,7 @@ enum LightType
 	SpotLight = 2
 };
 
-#define MAX_LIGHTS 1
+#define MAX_LIGHTS 2
 
 struct Light
 {
