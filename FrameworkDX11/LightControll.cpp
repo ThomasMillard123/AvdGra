@@ -10,7 +10,12 @@ LightControll::~LightControll()
 
 Light_Data* LightControll::GetLight(string Name)
 {
-    return nullptr;
+    for (auto LightData : _pLightData) {
+        if (LightData->GetName() == Name) {
+            return LightData;
+      }
+    }
+  
 }
 
 Light_Data* LightControll::GetLight(int No)
@@ -47,9 +52,34 @@ void LightControll::update(float t, ID3D11DeviceContext* pContext)
     }
 }
 
-void LightControll::draw(ID3D11DeviceContext* pContext)
+void LightControll::draw(ID3D11DeviceContext* pContext, ID3D11Buffer* _pConstantBuffer,   ConstantBuffer* CB)
 {
     for (auto LightData : _pLightData) {
+
+        XMFLOAT4X4 WorldAsFloat1 = LightData->GetLightObject()->GetTransfrom()->GetWorldMatrix();
+        XMMATRIX mGO = XMLoadFloat4x4(&WorldAsFloat1);
+        CB->mWorld = XMMatrixTranspose(mGO);
+        pContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, CB, 0, 0);
+
         LightData->draw(pContext);
     }
+}
+
+void LightControll::RemoveAllLights()
+{
+    for (int i = 0; i < _pLightData.size(); i++)
+    {
+        delete _pLightData[i];
+         _pLightData[i]=nullptr;
+    }
+
+    _pLightData.clear();
+
+}
+
+
+
+void LightControll::CleanUp()
+{
+    RemoveAllLights();
 }

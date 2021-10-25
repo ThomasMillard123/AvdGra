@@ -16,7 +16,7 @@ Light_Data::Light_Data(string Name, bool Enabled, LightType _LightType, XMFLOAT4
 	_LightData.QuadraticAttenuation = QuadraticAttenuation;
 
 
-	XMVECTOR LightDirection = XMVectorSet(-Pos.x, -Pos.y, 1, 0.0f);
+	XMVECTOR LightDirection = XMVectorSet(-Pos.x, -Pos.y, -Pos.z, 0.0f);
 	LightDirection = XMVector3Normalize(LightDirection);
 	XMStoreFloat4(&_LightData.Direction, LightDirection);
 
@@ -37,19 +37,21 @@ Light_Data::~Light_Data()
 
 void Light_Data::update(float t, ID3D11DeviceContext* pContext)
 {
-
-	if (LightObject->GetAppearance()) {
-		LightObject->GetTransfrom()->SetPosition(_LightData.Position.x, _LightData.Position.y, _LightData.Position.z);
-		LightObject->update(t, pContext);
+	if (_LightData.Enabled) {
+		if (LightObject->GetAppearance()) {
+			LightObject->GetTransfrom()->SetPosition(_LightData.Position.x, _LightData.Position.y, _LightData.Position.z);
+			LightObject->update(t, pContext);
+		}
 	}
-	
 
 }
 
 void Light_Data::draw(ID3D11DeviceContext* pContext)
 {
-	if (LightObject->GetAppearance()) {
-		LightObject->draw(pContext);
+	if (_LightData.Enabled) {
+		if (LightObject->GetAppearance()) {
+			LightObject->draw(pContext);
+		}
 	}
 }
 
@@ -87,6 +89,7 @@ void Light_Data::setColour(XMFLOAT4 Colour)
 void Light_Data::setPos(XMFLOAT4 Pos)
 {
 	_LightData.Position = Pos;
+
 }
 
 void Light_Data::setDirection(XMFLOAT4 dir)
@@ -96,6 +99,22 @@ void Light_Data::setDirection(XMFLOAT4 dir)
 	XMStoreFloat4(&_LightData.Direction, LightDirection);
 
 	
+}
+
+void Light_Data::SetEnabled(bool enabled)
+{
+
+	_LightData.Enabled = enabled;
+
+
+}
+
+void Light_Data::SetAttenuation(float ConstantAttenuation, float LinearAttenuation, float QuadraticAttenuation)
+{
+	_LightData.ConstantAttenuation = ConstantAttenuation;
+	_LightData.LinearAttenuation = LinearAttenuation;
+	_LightData.QuadraticAttenuation = QuadraticAttenuation;
+
 }
 
 void Light_Data::CleanUP()

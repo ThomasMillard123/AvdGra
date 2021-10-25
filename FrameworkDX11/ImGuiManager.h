@@ -4,11 +4,12 @@
 #include "imgui.h"
 #include "backends/imgui_impl_dx11.h"
 #include "backends/imgui_impl_win32.h"
-
+#include"misc/cpp/imgui_stdlib.h"
 #include"CameraController.h";
 
 class DrawableGameObject;
 class LightControll;
+class ShaderController;
 
 class ImGuiManager
 {
@@ -23,7 +24,7 @@ public:
 
 	//menus
 	void DrawCamMenu(CameraController* Cams);
-	void ShaderMenu();
+	void ShaderMenu(ShaderController* Shader);
 	void ObjectControl(DrawableGameObject* GameObject);
 	void LightControl(LightControll* LightControl);
 

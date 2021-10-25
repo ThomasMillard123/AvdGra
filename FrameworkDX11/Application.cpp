@@ -210,63 +210,17 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
 HRESULT Application::InitMesh()
 {
+    //create shaders
     _Shader = new ShaderController();
-    _Shader->NewVertexShader(L"shader.fx", _pd3dDevice, _pImmediateContext);
-    _Shader->NewPixleShader(L"shader.fx", _pd3dDevice);
-    //// Compile the vertex shader
-    //ID3DBlob* pVSBlob = nullptr;
-    //HRESULT hr = CompileShaderFromFile(L"shader.fx", "VS", "vs_4_0", &pVSBlob);
-    //if (FAILED(hr))
-    //{
-    //    MessageBox(nullptr,
-    //        L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
-    //    return hr;
-    //}
 
-    //// Create the vertex shader
-    //hr = _pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &_pVertexShader);
-    //if (FAILED(hr))
-    //{
-    //    pVSBlob->Release();
-    //    return hr;
-    //}
-
-    //// Define the input layout
-    //D3D11_INPUT_ELEMENT_DESC layout[] =
-    //{
-    //    { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    //    { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    //    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    //};
-    //UINT numElements = ARRAYSIZE(layout);
-
-    //// Create the input layout
-    //hr = _pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
-    //    pVSBlob->GetBufferSize(), &_pVertexLayout);
-    //pVSBlob->Release();
-    //if (FAILED(hr))
-    //    return hr;
-
-    //// Set the input layout
-    //_pImmediateContext->IASetInputLayout(_pVertexLayout);
-
-    //// Compile the pixel shader
-    //ID3DBlob* pPSBlob = nullptr;
-    //hr = CompileShaderFromFile(L"shader.fx", "PS", "ps_4_0", &pPSBlob);
-    //if (FAILED(hr))
-    //{
-    //    MessageBox(nullptr,
-    //        L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
-    //    return hr;
-    //}
-
-    //// Create the pixel shader
-    //hr = _pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &_pPixelShader);
-    //pPSBlob->Release();
-    //if (FAILED(hr))
-    //    return hr;
-
-
+    HRESULT hr= _Shader->NewShader("NormalMap", L"shader.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    
+    hr = _Shader->NewShader("Nothing", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+   
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -281,7 +235,7 @@ HRESULT Application::InitMesh()
     bd.ByteWidth = sizeof(ConstantBuffer);
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
-    HRESULT hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pConstantBuffer);
+    hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pConstantBuffer);
     if (FAILED(hr))
         return hr;
 
@@ -544,8 +498,9 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
-    _pLightContol->AddLight("A", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 1.0f, 1.0f, _pd3dDevice, _pImmediateContext);
-
+    //creat Lights
+    _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+    _pLightContol->AddLight("Point", true, LightType::PointLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     return S_OK;
 }
 void Application::Update()
@@ -596,10 +551,10 @@ void Application::Draw()
     setupLightForRender();
 
     // Render the cube
-    _pImmediateContext->VSSetShader(_Shader->GetCurrentVertexShader(), nullptr, 0);
+    _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 
-    _pImmediateContext->PSSetShader(_Shader->GetCurrentPixleShader(), nullptr, 0);
+    _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
     _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
 
 
@@ -609,20 +564,17 @@ void Application::Draw()
     _GameObject.draw(_pImmediateContext);
 
 
-    //TODO Change this 
-    XMFLOAT4X4 WorldAsFloat1 = _pLightContol->GetLight(0)->GetLightObject()->GetTransfrom()->GetWorldMatrix();
-     mGO = XMLoadFloat4x4(&WorldAsFloat1);
-    cb1.mWorld = XMMatrixTranspose(mGO);
-    _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+  
+    
 
-    _pLightContol->draw(_pImmediateContext);
+    _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
 
     DimGuiManager->BeginRender();
     DimGuiManager->DrawCamMenu(_pCamControll);
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
-
+    DimGuiManager->ShaderMenu(_Shader);
 
     DimGuiManager->EndRender();
 
@@ -662,26 +614,11 @@ float Application::calculateDeltaTime()
 
 void Application::setupLightForRender()
 {
-        Light light;
-        light.Enabled = static_cast<int>(true);
-        light.LightType = PointLight;
-        light.Color = XMFLOAT4(Colors::White);
-        light.SpotAngle = XMConvertToRadians(45.0f);
-        light.ConstantAttenuation = 1.0f;
-        light.LinearAttenuation = 1;
-        light.QuadraticAttenuation = 1;
-    
-    
-        // set up the light
-        XMFLOAT4 LightPosition(_pCamControll->GetCam(1)->GetPositionFloat4());
-        light.Position = LightPosition;
-        XMVECTOR LightDirection = XMVectorSet(-LightPosition.x, -LightPosition.y, -LightPosition.z, 0.0f);
-        LightDirection = XMVector3Normalize(LightDirection);
-        XMStoreFloat4(&light.Direction, LightDirection);
-    
+ 
         LightPropertiesConstantBuffer lightProperties;
         lightProperties.EyePosition = _pCamControll->GetCam(0)->GetPositionFloat4();
-        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();
+        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();;
+        lightProperties.Lights[1] = _pLightContol->GetLight(1)->GetLightData();
         _pImmediateContext->UpdateSubresource(_pLightConstantBuffer, 0, nullptr, &lightProperties, 0, 0);
 }
 
@@ -692,8 +629,20 @@ void Application::Cleanup()
     
         delete _controll;
         _controll = nullptr;
-        delete _Camrea;
-        _Camrea = nullptr;
+        
+        delete _pCamControll;
+        _pConstantBuffer = nullptr;
+
+        delete _pLightContol;
+        _pLightContol = nullptr;
+
+        delete DimGuiManager;
+        DimGuiManager = nullptr;
+
+        delete _Shader;
+        _Shader = nullptr;
+
+
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };

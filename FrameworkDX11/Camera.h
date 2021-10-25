@@ -53,7 +53,7 @@ public:
 	string GetCamName() { return CamName; }
 
 private:
-	void SubscribeToEvents();
+	
 	void CleanUp();
 private:
 

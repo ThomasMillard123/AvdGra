@@ -2,10 +2,30 @@
 
 ShaderController::ShaderController()
 {
+    CurrentShader = 0;
 }
 
 ShaderController::~ShaderController()
 {
+}
+
+HRESULT ShaderController::NewShader(string Name,const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+
+    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    
+    hr = NewPixleShader(szFileName, pd3dDevice);
+    if (FAILED(hr))
+        return hr;
+
+
+    ShaderData NewShaderData= ShaderData(Name,_pVertexShader, _pPixelShader, _pVertexLayout);
+
+    _ShaderData.push_back(NewShaderData);
+
+    return S_OK;
 }
 
 HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
@@ -28,19 +48,21 @@ HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* 
         pVSBlob->Release();
         return hr;
     }
-    _pVertexShader.push_back(pVertexShader);
-
+    _pVertexShader = pVertexShader;
+   
     // Define the input layout
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "tangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "biTangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
     UINT numElements = ARRAYSIZE(layout);
 
     // Create the input layout
-    hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+     hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
         pVSBlob->GetBufferSize(), &_pVertexLayout);
     pVSBlob->Release();
     if (FAILED(hr))
@@ -51,6 +73,7 @@ HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* 
 
     return hr;
 }
+
 
 HRESULT ShaderController::NewPixleShader(const WCHAR* szFileName,ID3D11Device* pd3dDevice)
 {
@@ -63,26 +86,27 @@ HRESULT ShaderController::NewPixleShader(const WCHAR* szFileName,ID3D11Device* p
             L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
         return hr;
     }
-    ID3D11PixelShader* pPixelShader;
+    
     // Create the pixel shader
-    hr = pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &pPixelShader);
+    hr = pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &_pPixelShader);
     pPSBlob->Release();
     if (FAILED(hr))
         return hr;
 
-    _pPixelShader.push_back(pPixelShader);
-
+  
     return hr;
 }
 
-ID3D11VertexShader* ShaderController::GetCurrentVertexShader()
+
+
+ShaderData ShaderController::GetShaderData()
 {
-    return _pVertexShader[0];
+    return _ShaderData[CurrentShader];
 }
 
-ID3D11PixelShader* ShaderController::GetCurrentPixleShader()
+void ShaderController::SetShaderData(UINT ShaderSet)
 {
-    return _pPixelShader[0];
+    CurrentShader = ShaderSet;
 }
 
 HRESULT ShaderController::CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
@@ -116,4 +140,19 @@ HRESULT ShaderController::CompileShaderFromFile(const WCHAR* szFileName, LPCSTR 
     if (pErrorBlob) pErrorBlob->Release();
 
     return S_OK;
+}
+
+void ShaderController::CleanUp()
+{
+     _pVertexShader = nullptr;
+     _pPixelShader = nullptr;
+     _pVertexLayout = nullptr;
+
+     for (auto Shader : _ShaderData) {
+
+         Shader.CleanUp();
+     }
+
+
+
 }

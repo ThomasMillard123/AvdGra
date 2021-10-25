@@ -76,6 +76,9 @@
     <ClCompile Include="Transform.cpp">
       <Filter>ObjectFiles</Filter>
     </ClCompile>
+    <ClCompile Include="..\imgui-master\misc\cpp\imgui_stdlib.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -159,6 +162,9 @@
     <ClInclude Include="Transform.h">
       <Filter>ObjectFiles</Filter>
     </ClInclude>
+    <ClInclude Include="..\imgui-master\misc\cpp\imgui_stdlib.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TextureLoading">
@@ -212,5 +218,10 @@
     <ResourceCompile Include="Tutorial01.rc">
       <Filter>UsefullFiles</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaderNoNormalMap.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

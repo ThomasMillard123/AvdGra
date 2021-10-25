@@ -27,6 +27,8 @@ public:
 	void setColour(XMFLOAT4 Colour);
 	void setPos(XMFLOAT4 Pos);
 	void setDirection(XMFLOAT4 dir);
+	void SetEnabled(bool enabled);
+	void SetAttenuation(float ConstantAttenuation=0, float LinearAttenuation = 0, float QuadraticAttenuation = 0);
 private:
 
 	Light _LightData;
