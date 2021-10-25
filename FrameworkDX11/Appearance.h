@@ -42,6 +42,10 @@ public:
 	ID3D11SamplerState** getTextureSamplerState() { return &m_pSamplerLinear; }
 	ID3D11Buffer* getMaterialConstantBuffer() { return m_pMaterialConstantBuffer; }
 	
+	MaterialPropertiesConstantBuffer getMaterialPropertiesConstantBuffer() { return m_material; }
+	void SetMaterial(MaterialPropertiesConstantBuffer material) { m_material = material; }
+
+
 
 	bool HasTexture() const { return m_pTextureResourceView ? true : false; }
 

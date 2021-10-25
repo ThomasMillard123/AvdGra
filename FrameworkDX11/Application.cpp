@@ -210,12 +210,17 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
 HRESULT Application::InitMesh()
 {
+    //create shaders
     _Shader = new ShaderController();
-    _Shader->NewVertexShader(L"shader.fx", _pd3dDevice, _pImmediateContext);
-    _Shader->NewPixleShader(L"shader.fx", _pd3dDevice);
+
+    HRESULT hr= _Shader->NewShader("NormalMap", L"shader.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    
+    hr = _Shader->NewShader("Nothing", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
    
-
-
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -230,7 +235,7 @@ HRESULT Application::InitMesh()
     bd.ByteWidth = sizeof(ConstantBuffer);
     bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bd.CPUAccessFlags = 0;
-    HRESULT hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pConstantBuffer);
+    hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pConstantBuffer);
     if (FAILED(hr))
         return hr;
 
@@ -493,6 +498,7 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
+    //creat Lights
     _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     _pLightContol->AddLight("Point", true, LightType::PointLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     return S_OK;
@@ -545,10 +551,10 @@ void Application::Draw()
     setupLightForRender();
 
     // Render the cube
-    _pImmediateContext->VSSetShader(_Shader->GetCurrentVertexShader(), nullptr, 0);
+    _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
 
-    _pImmediateContext->PSSetShader(_Shader->GetCurrentPixleShader(), nullptr, 0);
+    _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
     _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
 
 
@@ -568,7 +574,7 @@ void Application::Draw()
     DimGuiManager->DrawCamMenu(_pCamControll);
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
-
+    DimGuiManager->ShaderMenu(_Shader);
 
     DimGuiManager->EndRender();
 
@@ -608,10 +614,7 @@ float Application::calculateDeltaTime()
 
 void Application::setupLightForRender()
 {
-  
-
-
-
+ 
         LightPropertiesConstantBuffer lightProperties;
         lightProperties.EyePosition = _pCamControll->GetCam(0)->GetPositionFloat4();
         lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();;

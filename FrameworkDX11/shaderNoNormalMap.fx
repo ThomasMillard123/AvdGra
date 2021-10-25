@@ -17,9 +17,7 @@ cbuffer ConstantBuffer : register( b0 )
 	float4 vOutputColor;
 }
 
-
 Texture2D txDiffuse : register(t0);
-Texture2D txNormal: register(t1);
 SamplerState samLinear : register(s0);
 
 #define MAX_LIGHTS 2
@@ -93,17 +91,8 @@ struct PS_INPUT
 	float4 worldPos : POSITION;
 	float3 Norm : NORMAL;
 	float2 Tex : TEXCOORD0;
-	float3x3 TBN_inv:TBN;
 };
 
-
-
-float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
-{
-	// Transform from tangent space to world space.
-	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
-	return tangentSpaceNormal;
-}
 
 float4 DoDiffuse(Light light, float3 L, float3 N)
 {
@@ -138,35 +127,31 @@ struct LightingResult
 	float4 Specular;
 };
 
-LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N, float3x3 TBN_inv)
+LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N)
 {
 	LightingResult result;
 
 	float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
 	float distance = length(LightDirectionToVertex);
 	LightDirectionToVertex = LightDirectionToVertex  / distance;
-	LightDirectionToVertex= VectorToTangentSpace(LightDirectionToVertex.xyz, TBN_inv);
 
 	float3 vertexToLight = (light.Position - vertexPos).xyz;
-	float3 lightVectorTS = VectorToTangentSpace(vertexToLight.xyz, TBN_inv);
-
 	distance = length(vertexToLight);
 	vertexToLight = vertexToLight / distance;
 
 	float attenuation = DoAttenuation(light, distance);
-	//attenuation = 1;
+	attenuation = 1;
 
 
-	result.Diffuse = DoDiffuse(light, lightVectorTS, N) * attenuation;
+	result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
 	result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation;
 
 	return result;
 }
 
-LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
+LightingResult ComputeLighting(float4 vertexPos, float3 N)
 {
-	float3 vertexToEye = (EyePosition - vertexPos).xyz;
-	float3 eyeVectorTS = VectorToTangentSpace(vertexToEye.xyz, TBN_inv);
+	float3 vertexToEye = normalize(EyePosition - vertexPos).xyz;
 
 	LightingResult totalResult = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
 
@@ -178,8 +163,7 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 		if (!Lights[i].Enabled) 
 			continue;
 		
-		result = DoPointLight(Lights[i], eyeVectorTS, vertexPos, N, TBN_inv);
-		
+		result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
 		
 		totalResult.Diffuse += result.Diffuse;
 		totalResult.Specular += result.Specular;
@@ -206,14 +190,7 @@ PS_INPUT VS( VS_INPUT input )
 	output.Norm = mul(float4(input.Norm, 0), World).xyz;
 
 	output.Tex = input.Tex;
-  
-	// Build TBN matrix
-	float3 T = normalize(mul(input.Tangent, World));
-	float3 B = normalize(mul(input.BiTangent, World));
-	float3 N = normalize(mul(input.Norm, World));
-	float3x3 TBN = float3x3(T, B, N);
-	output.TBN_inv = transpose(TBN);
-
+    
     return output;
 }
 
@@ -224,16 +201,7 @@ PS_INPUT VS( VS_INPUT input )
 
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
-	
-	
-	float4 bumpMap;
-	bumpMap = txNormal.Sample(samLinear, IN.Tex);
-	// Expand the range of the normal value from (0, +1) to (-1, +1).
-	bumpMap = (bumpMap * 2.0f) - 1.0f;
-	bumpMap = float4(normalize(bumpMap.xyz), 1);
-
-
-	LightingResult lit = ComputeLighting(IN.worldPos, bumpMap, IN.TBN_inv);
+	LightingResult lit = ComputeLighting(IN.worldPos, normalize(IN.Norm));
 
 	float4 texColor = { 1, 1, 1, 1 };
 
@@ -245,7 +213,6 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	if (Material.UseTexture)
 	{
 		texColor = txDiffuse.Sample(samLinear, IN.Tex);
-
 	}
 
 	float4 finalColor = (emissive + ambient + diffuse + specular) * texColor;

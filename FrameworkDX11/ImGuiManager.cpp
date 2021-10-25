@@ -1,6 +1,7 @@
 #include "ImGuiManager.h"
 #include"DrawableGameObject.h"
 #include"LightControll.h"
+#include"ShaderController.h"
 ImGuiManager::ImGuiManager()
 {
 	IMGUI_CHECKVERSION();
@@ -82,6 +83,50 @@ void ImGuiManager::DrawCamMenu(CameraController* Cams)
     }
     ImGui::End();
 }
+
+static const char* current_Shader = NULL;
+static string Shadername;
+static bool LoadShader = false;
+void ImGuiManager::ShaderMenu(ShaderController* Shader)
+{
+    if (!LoadShader) {
+        Shadername = Shader->GetShaderData().Name;
+        current_Shader = Shadername.c_str();
+        LoadShader = true;
+    }
+
+    if (ImGui::Begin("Shader Controls", FALSE, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+       
+        if (ImGui::CollapsingHeader("Shader Select"))
+        {
+
+            if (ImGui::BeginCombo("##combo", current_Shader)) // The second parameter is the label previewed before opening the combo.
+            {
+                for (int n = 0; n < Shader->GetShaderList().size(); n++)
+                {
+                    bool is_selected = (current_Shader == Shader->GetShaderList()[n].Name.c_str()); // You can store your selection however you want, outside or inside your objects
+                    if (ImGui::Selectable(Shader->GetShaderList()[n].Name.c_str(), is_selected)) {
+
+                        Shadername = Shader->GetShaderList()[n].Name;
+                        Shader->SetShaderData(n);
+                        current_Shader = Shadername.c_str();
+                    }
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+
+                    }
+
+                }
+                ImGui::EndCombo();
+            }
+        }
+    }
+    ImGui::End();
+}
+
+
+
 static float rotationX, rotationY , rotationZ;
 static float pos[]= { 0.0f,0.0f,0.0f };
 void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
@@ -115,7 +160,29 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
         if (ImGui::CollapsingHeader("Tex Controll"))
         {
  
+            MaterialPropertiesConstantBuffer data= GameObject->GetAppearance()->getMaterialPropertiesConstantBuffer();
+           
+            bool booldata = data.Material.UseTexture;
+            ImGui::Text("Texture");
+            ImGui::Checkbox("On", &booldata);
+            data.Material.UseTexture = booldata;
+
+            ImGui::Text("Diffuse");
+            ImGui::InputFloat("X", &data.Material.Diffuse.x);
+            ImGui::InputFloat("Y", &data.Material.Diffuse.y);
+            ImGui::InputFloat("Z", &data.Material.Diffuse.z);
+
+
+            ImGui::Text("Specular");
+            ImGui::InputFloat("sX", &data.Material.Specular.x);
+            ImGui::InputFloat("sY", &data.Material.Specular.y);
+            ImGui::InputFloat("sZ", &data.Material.Specular.z);
+            ImGui::InputFloat("power", &data.Material.SpecularPower);
+
+            GameObject->GetAppearance()->SetMaterial(data);
         }
+
+
     }
     ImGui::End();
 }
@@ -225,10 +292,24 @@ void ImGuiManager::LightControl(LightControll* LightControl)
         if (ImGui::CollapsingHeader("Add Light"))
         {
 
-             /*float posNew[] = { 0.0f,0.0f,0.0f };
+             float posNew[] = { 0.0f,0.0f,0.0f };
              float DirNew[] = { 0.0f,0.0f,0.0f };
              float ColourNew[] = { 0.0f,0.0f,0.0f,0.0f };
              float attenuationNew[] = { 0.0f,0.0f,0.0f };
+             string Name;
+             float Ang=0;
+             bool On;
+
+
+             ImGui::Text("Name");
+             ImGui::InputText("Name",&Name);
+
+             ImGui::Text("Enabled");
+             ImGui::Checkbox("Enabled", &On);
+
+             ImGui::Text("Light Type");
+
+
 
             ImGui::Text("Position");
             ImGui::InputFloat("X", &posNew[0]);
@@ -241,7 +322,10 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             ImGui::InputFloat("B", &DirNew[1]);
             ImGui::InputFloat("C", &DirNew[2]);
 
-          
+            
+            ImGui::Text("Angle");
+            ImGui::InputFloat("Angle", &Ang);
+
             ImGui::Text("Colour");
             ImGui::InputFloat("A", &ColourNew[0]);
             ImGui::InputFloat("B", &ColourNew[1]);
@@ -251,14 +335,14 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             ImGui::Text("attenuation");
             ImGui::SliderFloat("Constant", &attenuationNew[0], 0, 10);
             ImGui::SliderFloat("Linear", &attenuationNew[1], 0, 5);
-            ImGui::SliderFloat("Quadratic", &attenuationNew[3], 0, 1);
+            ImGui::SliderFloat("Quadratic", &attenuationNew[2], 0, 1);
             
 
 
             if (ImGui::Button("add")) {
-
                 
-            }*/
+                
+            }
         }
     }
     ImGui::End();

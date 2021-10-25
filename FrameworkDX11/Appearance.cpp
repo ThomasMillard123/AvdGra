@@ -20,6 +20,7 @@ Appearance::~Appearance()
 
 void Appearance::Update(ID3D11DeviceContext* pContext)
 {
+	
 	pContext->UpdateSubresource(m_pMaterialConstantBuffer, 0, nullptr, &m_material, 0, 0);
 }
 
