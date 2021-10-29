@@ -223,5 +223,20 @@
     <None Include="shaderNoNormalMap.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaderVertexTBN.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderParallaxMapping.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderParallaxMapping1.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderParallaxOcMapping1.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderParallaxOcMapping .fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

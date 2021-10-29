@@ -148,7 +148,43 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
 
 	return result;
 }
+LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N)
+{
+	LightingResult result;
 
+	float3 L = -light.Direction.xyz;
+
+	result.Diffuse = DoDiffuse(light, L, N);
+	result.Specular = DoSpecular(light, V, L, N);
+
+	return result;
+}
+
+
+float DoSpotCone(Light light, float3 L)
+{
+	float minCos = cos(light.SpotAngle);
+	float maxCos = (minCos + 1.0f) / 2.0f;
+	float cosAngle = dot(light.Direction.xyz, -L);
+	return smoothstep(minCos, maxCos, cosAngle);
+}
+
+LightingResult DoSpotLight(Light light, float3 V, float4 P, float3 N)
+{
+	LightingResult result;
+
+	float3 L = (light.Position - P).xyz;
+	float distance = length(L);
+	L = L / distance;
+
+	float attenuation = DoAttenuation(light, distance);
+	float spotIntensity = DoSpotCone(light, L);
+
+	result.Diffuse = DoDiffuse(light, L, N) * attenuation * spotIntensity;
+	result.Specular = DoSpecular(light, V, L, N) * attenuation * spotIntensity;
+
+	return result;
+}
 LightingResult ComputeLighting(float4 vertexPos, float3 N)
 {
 	float3 vertexToEye = normalize(EyePosition - vertexPos).xyz;
@@ -163,7 +199,12 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N)
 		if (!Lights[i].Enabled) 
 			continue;
 		
-		result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
+		if (Lights[i].LightType == POINT_LIGHT)
+			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
+		if (Lights[i].LightType == DIRECTIONAL_LIGHT)
+			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N);
+		if (Lights[i].LightType == SPOT_LIGHT)
+			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N);
 		
 		totalResult.Diffuse += result.Diffuse;
 		totalResult.Specular += result.Specular;

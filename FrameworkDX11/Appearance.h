@@ -65,7 +65,7 @@ private:
 
 	
 	ID3D11ShaderResourceView* m_pNormalMapResourceView;
-
+	ID3D11ShaderResourceView* m_pParralaxMapResourceView;
 	void CleanUp();
 };
 

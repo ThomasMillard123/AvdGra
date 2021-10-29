@@ -261,19 +261,22 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             ImGui::Checkbox("Enabled", &enable);
             LightControl->GetLight(name1)->SetEnabled(enable);
 
-            ImGui::Text("Direction");
-            ImGui::InputFloat("A", &Dir[0]);
-            ImGui::InputFloat("B", &Dir[1]);
-            ImGui::InputFloat("C", &Dir[2]);
 
-            LightControl->GetLight(0)->setDirection(XMFLOAT4(Dir[0], Dir[1], Dir[2], 0.0f));
-
+           
             ImGui::SliderFloat4("Colour (R,G,B,A)", Colour, 0, 1);
             LightControl->GetLight(name1)->setColour(XMFLOAT4(Colour[0], Colour[1], Colour[2], Colour[3]));
 
+             if (LightControl->GetLight(name1)->GetLightData().LightType == LightType::DirectionalLight) {
+                ImGui::Text("Direction");
+                ImGui::InputFloat("A", &Dir[0]);
+                ImGui::InputFloat("B", &Dir[1]);
+                ImGui::InputFloat("C", &Dir[2]);
+
+                LightControl->GetLight(name1)->setDirection(XMFLOAT4(Dir[0], Dir[1], Dir[2], 0.0f));
+              }
 
 
-            if (LightControl->GetLight(name1)->GetLightData().LightType == LightType::PointLight) {
+            if (LightControl->GetLight(name1)->GetLightData().LightType == LightType::PointLight || LightControl->GetLight(name1)->GetLightData().LightType == LightType::SpotLight) {
                 ImGui::Text("attenuation");
                 ImGui::SliderFloat("Constant", &attenuation[0], 1.0f, 10.0f, "%.2f");
                 ImGui::SliderFloat("Linear", &attenuation[1], 0.0f, 5.0f, "%.4f");

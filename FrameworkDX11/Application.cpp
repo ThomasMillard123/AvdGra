@@ -184,7 +184,7 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
    
 
     AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
-    _hWnd = CreateWindow(L"TutorialWindowClass", L"Direct3D 11 Tutorial 5",
+    _hWnd = CreateWindow(L"TutorialWindowClass", L"Direct3D 11",
         WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, hInstance,
         nullptr);
@@ -213,14 +213,32 @@ HRESULT Application::InitMesh()
     //create shaders
     _Shader = new ShaderController();
 
-    HRESULT hr= _Shader->NewShader("NormalMap", L"shader.fx", _pd3dDevice, _pImmediateContext);
+    HRESULT hr = _Shader->NewShader("NoEffects", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
     
-    hr = _Shader->NewShader("Nothing", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
+    hr= _Shader->NewShader("NormalMap", L"shader.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
-   
+
+    hr = _Shader->NewShader("NormalMapTBNVERT", L"shaderVertexTBN.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+
+    hr = _Shader->NewShader("ParallaxMapping", L"shaderParallaxMapping.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewShader("ParallaxMapping1", L"shaderParallaxMapping1.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
     bd.Usage = D3D11_USAGE_DEFAULT;
@@ -494,13 +512,11 @@ HRESULT Application::InitDevice()
         return hr;
     }
 
-    hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
-    if (FAILED(hr))
-        return hr;
+   
 
     //creat Lights
     _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
-    _pLightContol->AddLight("Point", true, LightType::PointLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+    _pLightContol->AddLight("Point", true, LightType::SpotLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(10.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     return S_OK;
 }
 void Application::Update()
@@ -553,6 +569,7 @@ void Application::Draw()
     // Render the cube
     _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+    _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
 
     _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
     _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
@@ -617,7 +634,7 @@ void Application::setupLightForRender()
  
         LightPropertiesConstantBuffer lightProperties;
         lightProperties.EyePosition = _pCamControll->GetCam(0)->GetPositionFloat4();
-        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();;
+        lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();
         lightProperties.Lights[1] = _pLightContol->GetLight(1)->GetLightData();
         _pImmediateContext->UpdateSubresource(_pLightConstantBuffer, 0, nullptr, &lightProperties, 0, 0);
 }
