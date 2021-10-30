@@ -110,14 +110,17 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 	return tangentSpaceNormal;
 }
 
-float2 ParallaxMapping(float2 texCoords, float3 viewDir)
+float2 ParallaxMapping(float2 texCoord, float3 viewDir)
 {
-	float height_scale = 0.1f;
-	float height = txParallax.Sample(samLinear, texCoords).x;
-	float heightSB = height_scale * (height - 1.0f);
-	float2 p = viewDir.xy * heightSB;
-	// add bias if required
-	return texCoords + p;
+	float fHeightScale = 0.1f;
+	float height = txParallax.Sample(samLinear, texCoord).r;
+	//assumed that scaled height = -biased height -> h * s + b = h * s - s = s(h - 1)
+	//because in presentation it states that reasonable scale value = 0.02, and bias = [-0.01, -0.02]
+	float heightSB = fHeightScale * (height - 1.0);
+
+	float2 parallax = viewDir.xy * heightSB;
+
+	return (texCoord + parallax);
 }
 
 float4 DoDiffuse(Light light, float3 L, float3 N)
@@ -305,7 +308,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 
 	float3 viewDir = normalize(IN.EyePosTS -IN.PosTS);
 	
-	float2 texCoords = ParallaxMapping(IN.Tex, viewDir);
+	float2 texCoords = ParallaxMapping(IN.Tex, IN.eyeVectorTS);
 
 	if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
 		discard;

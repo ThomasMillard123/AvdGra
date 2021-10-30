@@ -29,6 +29,7 @@ public:
 	void setDirection(XMFLOAT4 dir);
 	void SetEnabled(bool enabled);
 	void SetAttenuation(float ConstantAttenuation=0, float LinearAttenuation = 0, float QuadraticAttenuation = 0);
+	void SetAngle(float Angle);
 private:
 
 	Light _LightData;

@@ -235,7 +235,7 @@
     <None Include="shaderParallaxOcMapping1.fx">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaderParallaxOcMapping .fx">
+    <None Include="shaderParallaxOcMapping.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

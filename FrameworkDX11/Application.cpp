@@ -234,6 +234,15 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+
+    hr = _Shader->NewShader("ParallaxOcMapping", L"shaderParallaxOcMapping.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewShader("ParallaxOcMapping1", L"shaderParallaxOcMapping1.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;

@@ -263,7 +263,8 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	m_material.Material.Specular = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
 	m_material.Material.SpecularPower = 32.0f;
 	m_material.Material.UseTexture = true;
-
+	m_material.Material.Emissive= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_material.Material.Ambient= XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	// Create the material constant buffer
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(MaterialPropertiesConstantBuffer);

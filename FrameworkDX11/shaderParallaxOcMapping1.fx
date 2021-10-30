@@ -108,17 +108,55 @@ float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 }
 
 
-float2 SimpleParallax(float2 texCoord, float3 toEye)
+float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
-	float fHeightScale=0.1f;
-	float height = txParallax.Sample(samLinear, texCoord).r;
-	//assumed that scaled height = -biased height -> h * s + b = h * s - s = s(h - 1)
-	//because in presentation it states that reasonable scale value = 0.02, and bias = [-0.01, -0.02]
-	float heightSB = fHeightScale * (height - 1.0);
 
-	float2 parallax = toEye.xy * heightSB;
+	float fHeightScale = 0.1f;
 
-	return (texCoord + parallax);
+	float fParallaxLimit = -length(toEye.xy) / toEye.z; fParallaxLimit *= fHeightScale;
+	float2 vOffsetDir = normalize(toEye.xy);
+	float2 vMaxOffset = vOffsetDir * fParallaxLimit;
+
+	float minLayers = 10;
+	float maxLayers = 15;
+
+	float nNumSamples = lerp(maxLayers, minLayers, abs(dot(toEye, Normal)));
+
+	float fStepSize = 1.0 / nNumSamples;
+
+	float2 dx = ddx(texCoord);
+	float2 dy = ddy(texCoord);
+
+	float fCurrRayHeight = 1.0; 
+	float2 vCurrOffset = float2(0, 0); 
+	float2 vLastOffset = float2(0, 0); 
+	float fLastSampledHeight = 1; 
+	float fCurrSampledHeight = 1; 
+	int nCurrSample = 0;
+
+	while (nCurrSample < nNumSamples) { 
+		
+		fCurrSampledHeight = txParallax.SampleGrad(samLinear, texCoord + vCurrOffset, dx, dy).x;
+		if (fCurrSampledHeight > fCurrRayHeight) { 
+			float delta1 = fCurrSampledHeight - fCurrRayHeight; 
+			float delta2 = (fCurrRayHeight + fStepSize) - fLastSampledHeight; 
+			float ratio = delta1 / (delta1 + delta2); 
+			vCurrOffset = (ratio)*vLastOffset + (1.0 - ratio) * vCurrOffset; 
+			nCurrSample = nNumSamples + 1; 
+		} 
+		else { 
+			nCurrSample++; 
+			fCurrRayHeight -= fStepSize; 
+			vLastOffset = vCurrOffset; 
+			vCurrOffset += fStepSize * vMaxOffset; 
+			fLastSampledHeight = fCurrSampledHeight; 
+		} 
+	}
+
+	float2 vFinalCoords = texCoord+ vCurrOffset;
+	// return result
+	return vFinalCoords;
+
 }
 
 
@@ -299,7 +337,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	float3 vertexToEye = normalize(EyePosition - IN.worldPos).xyz;
 	float3 vertexToEyeTS = mul(vertexToEye, IN.TBN);
 
-	float2 parallaxTex = SimpleParallax(IN.Tex, vertexToEyeTS);
+	float2 parallaxTex = Parallax(IN.Tex, vertexToEyeTS, IN.Norm);
 
 	if (parallaxTex.x > 1.0 || parallaxTex.y > 1.0 || parallaxTex.x < 0.0 || parallaxTex.y < 0.0)
 		discard;

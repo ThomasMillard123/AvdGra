@@ -104,7 +104,7 @@ void Light_Data::setDirection(XMFLOAT4 dir)
 void Light_Data::SetEnabled(bool enabled)
 {
 
-	_LightData.Enabled = enabled;
+	_LightData.Enabled = XMConvertToRadians(enabled);
 
 
 }
@@ -115,6 +115,11 @@ void Light_Data::SetAttenuation(float ConstantAttenuation, float LinearAttenuati
 	_LightData.LinearAttenuation = LinearAttenuation;
 	_LightData.QuadraticAttenuation = QuadraticAttenuation;
 
+}
+
+void Light_Data::SetAngle(float Angle)
+{
+	_LightData.SpotAngle = Angle;
 }
 
 void Light_Data::CleanUP()
