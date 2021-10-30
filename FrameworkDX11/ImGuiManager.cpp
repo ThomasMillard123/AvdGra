@@ -165,19 +165,35 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
             bool booldata = data.Material.UseTexture;
             ImGui::Text("Texture");
             ImGui::Checkbox("On", &booldata);
+
+
+
+
             data.Material.UseTexture = booldata;
 
             ImGui::Text("Diffuse");
-            ImGui::InputFloat("X", &data.Material.Diffuse.x);
-            ImGui::InputFloat("Y", &data.Material.Diffuse.y);
-            ImGui::InputFloat("Z", &data.Material.Diffuse.z);
+            ImGui::InputFloat("dR", &data.Material.Diffuse.x);
+            ImGui::InputFloat("dG", &data.Material.Diffuse.y);
+            ImGui::InputFloat("dB", &data.Material.Diffuse.z);
 
 
             ImGui::Text("Specular");
-            ImGui::InputFloat("sX", &data.Material.Specular.x);
-            ImGui::InputFloat("sY", &data.Material.Specular.y);
-            ImGui::InputFloat("sZ", &data.Material.Specular.z);
+            ImGui::InputFloat("sR", &data.Material.Specular.x);
+            ImGui::InputFloat("sG", &data.Material.Specular.y);
+            ImGui::InputFloat("sB", &data.Material.Specular.z);
             ImGui::InputFloat("power", &data.Material.SpecularPower);
+
+            ImGui::Text("emissive");
+            ImGui::InputFloat("eR", &data.Material.Emissive.x);
+            ImGui::InputFloat("eG", &data.Material.Emissive.y);
+            ImGui::InputFloat("eB", &data.Material.Emissive.z);
+          
+
+            ImGui::Text("ambient");
+            ImGui::InputFloat("aR", &data.Material.Ambient.x);
+            ImGui::InputFloat("aG", &data.Material.Ambient.y);
+            ImGui::InputFloat("aB", &data.Material.Ambient.z);
+           
 
             GameObject->GetAppearance()->SetMaterial(data);
         }
@@ -187,19 +203,19 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
     ImGui::End();
 }
 
-static float pos2[] = {0.0f,0.0f,0.0f};
-static float Dir[] = { 0.0f,0.0f,0.0f };
-static float Colour[] = { 0.0f,0.0f,0.0f,0.0f };
-static float attenuation[] = { 0.0f,0.0f,0.0f };
+
 static const char* current_item1 = NULL;
 static string name1;
-static bool enable;
 static bool Load2 = false;
+
+static Light CurrLightData;
+
 void ImGuiManager::LightControl(LightControll* LightControl)
 {
 
     if (!Load2) {
         name1 = LightControl->GetLight(0)->GetName();
+        CurrLightData = LightControl->GetLightList()[0]->GetLightData();
         current_item1 = name1.c_str();
         Load2 = true;
     }
@@ -218,70 +234,75 @@ void ImGuiManager::LightControl(LightControll* LightControl)
                         name1 = LightControl->GetLightList()[n]->GetName().c_str();
 
                         
-
+                        CurrLightData = LightControl->GetLightList()[n]->GetLightData();
                         current_item1 = name1.c_str();
                     }
                     if (is_selected) {
                         ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-
+                      
                     }
 
                 }
                 ImGui::EndCombo();
             }
 
-            pos2[0] = LightControl->GetLight(name1)->GetLightData().Position.x;
-            pos2[1] = LightControl->GetLight(name1)->GetLightData().Position.y;
-            pos2[2] = LightControl->GetLight(name1)->GetLightData().Position.z;
-
-
-            Dir[0] = LightControl->GetLight(name1)->GetLightData().Direction.x;
-            Dir[1] = LightControl->GetLight(name1)->GetLightData().Direction.y;
-            Dir[2] = LightControl->GetLight(name1)->GetLightData().Direction.z;
-
-            Colour[0] = LightControl->GetLight(name1)->GetLightData().Color.x;
-            Colour[1] = LightControl->GetLight(name1)->GetLightData().Color.y;
-            Colour[2] = LightControl->GetLight(name1)->GetLightData().Color.z;
-            Colour[3] = LightControl->GetLight(name1)->GetLightData().Color.w;
-
-
-            attenuation[0] = LightControl->GetLight(name1)->GetLightData().ConstantAttenuation;
-            attenuation[1] = LightControl->GetLight(name1)->GetLightData().LinearAttenuation;
-            attenuation[2] = LightControl->GetLight(name1)->GetLightData().QuadraticAttenuation;
+            CurrLightData = LightControl->GetLight(name1)->GetLightData();
 
             ImGui::Text("Position");
-            ImGui::InputFloat("X", &pos2[0]);
-            ImGui::InputFloat("Y", &pos2[1]);
-            ImGui::InputFloat("Z", &pos2[2]);
-
-            LightControl->GetLight(name1)->setPos(XMFLOAT4(pos2[0], pos2[1], pos2[2], 0.0f));
+            ImGui::InputFloat("X", &CurrLightData.Position.x);
+            ImGui::InputFloat("Y", &CurrLightData.Position.y);
+            ImGui::InputFloat("Z", &CurrLightData.Position.z);
 
 
-            enable = LightControl->GetLight(name1)->GetLightData().Enabled;
+            bool enable = CurrLightData.Enabled;
             ImGui::Checkbox("Enabled", &enable);
-            LightControl->GetLight(name1)->SetEnabled(enable);
+            CurrLightData.Enabled = enable;
 
-            ImGui::Text("Direction");
-            ImGui::InputFloat("A", &Dir[0]);
-            ImGui::InputFloat("B", &Dir[1]);
-            ImGui::InputFloat("C", &Dir[2]);
+            float Colour[] = { CurrLightData.Color.x ,CurrLightData.Color.y,CurrLightData.Color.z,CurrLightData.Color.w };
+            ImGui::ColorPicker4("Colour", Colour,ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB);
+            CurrLightData.Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
 
-            LightControl->GetLight(0)->setDirection(XMFLOAT4(Dir[0], Dir[1], Dir[2], 0.0f));
+         
 
-            ImGui::SliderFloat4("Colour (R,G,B,A)", Colour, 0, 1);
-            LightControl->GetLight(name1)->setColour(XMFLOAT4(Colour[0], Colour[1], Colour[2], Colour[3]));
+            switch (LightControl->GetLight(name1)->GetLightData().LightType)
+            {
 
-
-
-            if (LightControl->GetLight(name1)->GetLightData().LightType == LightType::PointLight) {
+            case LightType::PointLight:
                 ImGui::Text("attenuation");
-                ImGui::SliderFloat("Constant", &attenuation[0], 1.0f, 10.0f, "%.2f");
-                ImGui::SliderFloat("Linear", &attenuation[1], 0.0f, 5.0f, "%.4f");
-                ImGui::SliderFloat("Quadratic", &attenuation[2], 0.0f, 2.0f, "%.7f");
+                ImGui::SliderFloat("Constant", &CurrLightData.ConstantAttenuation, 1.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat("Linear", &CurrLightData.LinearAttenuation, 0.0f, 5.0f, "%.4f");
+                ImGui::SliderFloat("Quadratic", &CurrLightData.QuadraticAttenuation, 0.0f, 2.0f, "%.7f");
+                break;
 
+            case LightType::SpotLight:
+            {
+                ImGui::Text("attenuation");
+                ImGui::SliderFloat("Constant", &CurrLightData.ConstantAttenuation, 1.0f, 10.0f, "%.2f");
+                ImGui::SliderFloat("Linear", &CurrLightData.LinearAttenuation, 0.0f, 5.0f, "%.4f");
+                ImGui::SliderFloat("Quadratic", &CurrLightData.QuadraticAttenuation, 0.0f, 2.0f, "%.7f");
 
-                LightControl->GetLight(name1)->SetAttenuation(attenuation[0], attenuation[1], attenuation[2]);
+                float SpotAngle = XMConvertToDegrees(CurrLightData.SpotAngle);
+                ImGui::InputFloat("Spot Angle", &SpotAngle);
+                CurrLightData.SpotAngle = XMConvertToRadians(SpotAngle);
+               
             }
+                break;
+
+            case LightType::DirectionalLight:
+                ImGui::Text("Direction");
+                ImGui::InputFloat("A", &CurrLightData.Direction.x);
+                ImGui::InputFloat("B", &CurrLightData.Direction.y);
+                ImGui::InputFloat("C", &CurrLightData.Direction.z);
+
+                
+                break;
+
+            default:
+                break;
+            }
+
+
+            LightControl->GetLight(name1)->SetLightData(CurrLightData);
 
             if (ImGui::Button("Reset")) {
 
@@ -289,61 +310,7 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             }
 
         }
-        if (ImGui::CollapsingHeader("Add Light"))
-        {
-
-             float posNew[] = { 0.0f,0.0f,0.0f };
-             float DirNew[] = { 0.0f,0.0f,0.0f };
-             float ColourNew[] = { 0.0f,0.0f,0.0f,0.0f };
-             float attenuationNew[] = { 0.0f,0.0f,0.0f };
-             string Name;
-             float Ang=0;
-             bool On;
-
-
-             ImGui::Text("Name");
-             ImGui::InputText("Name",&Name);
-
-             ImGui::Text("Enabled");
-             ImGui::Checkbox("Enabled", &On);
-
-             ImGui::Text("Light Type");
-
-
-
-            ImGui::Text("Position");
-            ImGui::InputFloat("X", &posNew[0]);
-            ImGui::InputFloat("Y", &posNew[1]);
-            ImGui::InputFloat("Z", &posNew[2]);
-
-
-            ImGui::Text("Direction");
-            ImGui::InputFloat("A", &DirNew[0]);
-            ImGui::InputFloat("B", &DirNew[1]);
-            ImGui::InputFloat("C", &DirNew[2]);
-
-            
-            ImGui::Text("Angle");
-            ImGui::InputFloat("Angle", &Ang);
-
-            ImGui::Text("Colour");
-            ImGui::InputFloat("A", &ColourNew[0]);
-            ImGui::InputFloat("B", &ColourNew[1]);
-            ImGui::InputFloat("C", &ColourNew[2]);
-            ImGui::InputFloat("C", &ColourNew[2]);
-
-            ImGui::Text("attenuation");
-            ImGui::SliderFloat("Constant", &attenuationNew[0], 0, 10);
-            ImGui::SliderFloat("Linear", &attenuationNew[1], 0, 5);
-            ImGui::SliderFloat("Quadratic", &attenuationNew[2], 0, 1);
-            
-
-
-            if (ImGui::Button("add")) {
-                
-                
-            }
-        }
+       
     }
     ImGui::End();
 }

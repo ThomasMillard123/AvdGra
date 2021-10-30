@@ -93,7 +93,8 @@ struct PS_INPUT
 	float4 worldPos : POSITION;
 	float3 Norm : NORMAL;
 	float2 Tex : TEXCOORD0;
-	float3x3 TBN_inv:TBN;
+	float3x3 TBN_inv:TBNINV;
+	float3x3 TBN:TBN;
 };
 
 
@@ -145,20 +146,60 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
 	float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
 	float distance = length(LightDirectionToVertex);
 	LightDirectionToVertex = LightDirectionToVertex  / distance;
-	LightDirectionToVertex= VectorToTangentSpace(LightDirectionToVertex.xyz, TBN_inv);
 
 	float3 vertexToLight = (light.Position - vertexPos).xyz;
-	float3 lightVectorTS = VectorToTangentSpace(vertexToLight.xyz, TBN_inv);
-
 	distance = length(vertexToLight);
 	vertexToLight = vertexToLight / distance;
 
 	float attenuation = DoAttenuation(light, distance);
-	//attenuation = 1;
 
-
-	result.Diffuse = DoDiffuse(light, lightVectorTS, N) * attenuation;
+	result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
 	result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation;
+
+	return result;
+}
+
+LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N,float3x3 TBN_inv)
+{
+	LightingResult result;
+
+	float3 L = -light.Direction.xyz;
+
+	result.Diffuse = DoDiffuse(light, L, N);
+	result.Specular = DoSpecular(light, V, L, N);
+
+	return result;
+}
+
+
+float DoSpotCone(Light light, float3 L)
+{
+	float minCos = cos(light.SpotAngle);
+	float maxCos = (minCos + 1.0f) / 2.0f;
+	float cosAngle = dot(light.Direction.xyz, -L);
+	return smoothstep(minCos, maxCos, cosAngle);
+}
+
+LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N,float3x3 TBN_inv)
+{
+	LightingResult result;
+
+
+	float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
+	float distance = length(LightDirectionToVertex);
+	LightDirectionToVertex = LightDirectionToVertex / distance;
+
+
+	float3 L = (light.Position - vertexPos).xyz;
+	distance = length(L);
+	L = L / distance;
+	
+
+	float attenuation = DoAttenuation(light, distance);
+	float spotIntensity = DoSpotCone(light, L);
+
+	result.Diffuse = DoDiffuse(light, L, N) * attenuation * spotIntensity;
+	result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation * spotIntensity;
 
 	return result;
 }
@@ -166,7 +207,7 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
 LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 {
 	float3 vertexToEye = (EyePosition - vertexPos).xyz;
-	float3 eyeVectorTS = VectorToTangentSpace(vertexToEye.xyz, TBN_inv);
+	//float3 eyeVectorTS = VectorToTangentSpace(vertexToEye.xyz, TBN_inv);
 
 	LightingResult totalResult = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
 
@@ -178,7 +219,13 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 		if (!Lights[i].Enabled) 
 			continue;
 		
-		result = DoPointLight(Lights[i], eyeVectorTS, vertexPos, N, TBN_inv);
+		
+		if (Lights[i].LightType == POINT_LIGHT)
+			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+		if (Lights[i].LightType == DIRECTIONAL_LIGHT)
+			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+		if (Lights[i].LightType == SPOT_LIGHT)
+			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
 		
 		
 		totalResult.Diffuse += result.Diffuse;
@@ -194,6 +241,13 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 //--------------------------------------------------------------------------------------
 // Vertex Shader
 //--------------------------------------------------------------------------------------
+
+
+//can change this to calualte vertextoeye and vertextolight in vertex shader to improve efficeny as then they will be caluated 3 times foe each vertex insead
+//of for each pixle. To do this another function would have to be created to caluate the data for each light and that data would have to be passed to the pixle shader.
+// this has not be done here as for the time bing is is esayer to keep the lighting moddle the 
+
+
 PS_INPUT VS( VS_INPUT input )
 {
     PS_INPUT output = (PS_INPUT)0;
@@ -213,6 +267,7 @@ PS_INPUT VS( VS_INPUT input )
 	float3 N = normalize(mul(input.Norm, World));
 	float3x3 TBN = float3x3(T, B, N);
 	output.TBN_inv = transpose(TBN);
+	output.TBN = TBN;
 
     return output;
 }
@@ -225,15 +280,15 @@ PS_INPUT VS( VS_INPUT input )
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
 	
-	
-	float4 bumpMap;
-	bumpMap = txNormal.Sample(samLinear, IN.Tex);
-	// Expand the range of the normal value from (0, +1) to (-1, +1).
-	bumpMap = (bumpMap * 2.0f) - 1.0f;
-	bumpMap = float4(normalize(bumpMap.xyz), 1);
+	// get bupmap in world space
+	float3 texNormal = txNormal.Sample(samLinear, IN.Tex).rgb;
+	//decompress from [0,1] to [-1,1] range
+	float3 texNorm = 2.0f * texNormal - 1.0f;
+	//transform from tangent space to world space
+	float3 bumpedNorm = mul(texNorm, IN.TBN);
 
 
-	LightingResult lit = ComputeLighting(IN.worldPos, bumpMap, IN.TBN_inv);
+	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm, IN.TBN_inv);
 
 	float4 texColor = { 1, 1, 1, 1 };
 

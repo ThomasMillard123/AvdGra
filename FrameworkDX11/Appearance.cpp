@@ -29,6 +29,7 @@ void Appearance::Draw(ID3D11DeviceContext* pImmediateContext)
 	
 	pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureResourceView);
 	pImmediateContext->PSSetShaderResources(1, 1, &m_pNormalMapResourceView);
+	pImmediateContext->PSSetShaderResources(2, 1, &m_pParralaxMapResourceView);
 	pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 
 	pImmediateContext->DrawIndexed(NUM_VERTICES, 0, 0);
@@ -235,11 +236,15 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// load and setup textures
-	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\stone.dds", nullptr, &m_pTextureResourceView);
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_TEX.dds", nullptr, &m_pTextureResourceView);
 	if (FAILED(hr))
 		return hr;
 
-	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\conenormal.dds", nullptr, &m_pNormalMapResourceView);
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_NORM.dds", nullptr, &m_pNormalMapResourceView);
+	if (FAILED(hr))
+		return hr;
+
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_DISP.dds", nullptr, &m_pParralaxMapResourceView);
 	if (FAILED(hr))
 		return hr;
 
@@ -258,7 +263,8 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	m_material.Material.Specular = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
 	m_material.Material.SpecularPower = 32.0f;
 	m_material.Material.UseTexture = true;
-
+	m_material.Material.Emissive= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_material.Material.Ambient= XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
 	// Create the material constant buffer
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(MaterialPropertiesConstantBuffer);
