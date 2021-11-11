@@ -107,55 +107,61 @@ float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 	return tangentSpaceNormal;
 }
 
-
+//parralax mapping occlusion
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
 
-	float fHeightScale = 0.1f;
+	float HeightScale = 0.1f;
 
-	float fParallaxLimit = -length(toEye.xy) / toEye.z; fParallaxLimit *= fHeightScale;
+	//caluate the max of the amout of movement 
+	float ParallaxLimit = -length(toEye.xy) / toEye.z;
+	ParallaxLimit *= HeightScale;
+
 	float2 vOffsetDir = normalize(toEye.xy);
-	float2 vMaxOffset = vOffsetDir * fParallaxLimit;
+	float2 vMaxOffset = vOffsetDir * ParallaxLimit;
 
 	float minLayers = 10;
 	float maxLayers = 15;
 
-	float nNumSamples = lerp(maxLayers, minLayers, abs(dot(toEye, Normal)));
+	float NumLayers = lerp(maxLayers, minLayers, abs(dot(toEye, Normal)));
 
-	float fStepSize = 1.0 / nNumSamples;
+	float Step = 1.0 / NumLayers;
 
 	float2 dx = ddx(texCoord);
 	float2 dy = ddy(texCoord);
 
-	float fCurrRayHeight = 1.0; 
-	float2 vCurrOffset = float2(0, 0); 
-	float2 vLastOffset = float2(0, 0); 
-	float fLastSampledHeight = 1; 
-	float fCurrSampledHeight = 1; 
-	int nCurrSample = 0;
+	float CurrentRayHeight = 1.0;
+	float2 vCurrOffset = float2(0, 0);
+	float2 vLastOffset = float2(0, 0);
+	float LastSampledHeight = 1;
+	float CurrentSampledHeight = 1;
+	int CurrentSample = 0;
 
-	while (nCurrSample < nNumSamples) { 
-		
-		fCurrSampledHeight = txParallax.SampleGrad(samLinear, texCoord + vCurrOffset, dx, dy).x;
-		if (fCurrSampledHeight > fCurrRayHeight) { 
-			float delta1 = fCurrSampledHeight - fCurrRayHeight; 
-			float delta2 = (fCurrRayHeight + fStepSize) - fLastSampledHeight; 
-			float ratio = delta1 / (delta1 + delta2); 
-			vCurrOffset = (ratio)*vLastOffset + (1.0 - ratio) * vCurrOffset; 
-			nCurrSample = nNumSamples + 1; 
-		} 
-		else { 
-			nCurrSample++; 
-			fCurrRayHeight -= fStepSize; 
-			vLastOffset = vCurrOffset; 
-			vCurrOffset += fStepSize * vMaxOffset; 
-			fLastSampledHeight = fCurrSampledHeight; 
-		} 
+	while (CurrentSample < NumLayers) {
+
+		CurrentSampledHeight = txParallax.SampleGrad(samLinear, texCoord + vCurrOffset, dx, dy).x;
+		if (CurrentSampledHeight > CurrentRayHeight) {
+			//find intersection 
+			float delta1 = CurrentSampledHeight - CurrentRayHeight;
+			float delta2 = (CurrentRayHeight + Step) - LastSampledHeight;
+			float ratio = delta1 / (delta1 + delta2);
+			vCurrOffset = (ratio)*vLastOffset + (1.0 - ratio) * vCurrOffset;
+			CurrentSample = NumLayers + 1;
+		}
+		else {
+			//move to next layer
+			CurrentSample++;
+			CurrentRayHeight -= Step;
+			vLastOffset = vCurrOffset;
+			vCurrOffset += Step * vMaxOffset;
+			LastSampledHeight = CurrentSampledHeight;
+		}
 	}
 
-	float2 vFinalCoords = texCoord+ vCurrOffset;
+	float2 FinalTexCoords = texCoord + vCurrOffset;
 	// return result
-	return vFinalCoords;
+	return FinalTexCoords;
+
 
 }
 
@@ -335,20 +341,17 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 {
 	
 	float3 vertexToEye = normalize(EyePosition - IN.worldPos).xyz;
-	float3 vertexToEyeTS = mul(vertexToEye, IN.TBN);
+	float3 vertexToEyeTS = mul(vertexToEye, IN.TBN_inv);
+	
+	float2 parallaxTexCoords = Parallax(IN.Tex, vertexToEyeTS, IN.Norm);
 
-	float2 parallaxTex = Parallax(IN.Tex, vertexToEyeTS, IN.Norm);
-
-	if (parallaxTex.x > 1.0 || parallaxTex.y > 1.0 || parallaxTex.x < 0.0 || parallaxTex.y < 0.0)
+	if (parallaxTexCoords.x > 1.0 || parallaxTexCoords.y > 1.0 || parallaxTexCoords.x < 0.0 || parallaxTexCoords.y < 0.0)
 		discard;
 
-	// get bupmap in world space
-	float3 texNormal = txNormal.Sample(samLinear, parallaxTex).rgb;
-	//decompress from [0,1] to [-1,1] range
-	float3 texNorm = 2.0f * texNormal - 1.0f;
+	float4 bumpMap = txNormal.Sample(samLinear, parallaxTexCoords);
+	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	//transform from tangent space to world space
-	float3 bumpedNorm = mul(texNorm, IN.TBN);
-
+	float3 bumpedNorm = normalize(mul(bumpMap, IN.TBN));
 
 	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm, IN.TBN);
 
@@ -361,7 +364,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 
 	if (Material.UseTexture)
 	{
-		texColor = txDiffuse.Sample(samLinear, IN.Tex);
+		texColor = txDiffuse.Sample(samLinear, parallaxTexCoords);
 
 	}
 

@@ -304,19 +304,13 @@ PS_INPUT VS(VS_INPUT input)
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
 
+	float2 parallaxTexCoords = ParallaxMapping(IN.Tex, IN.eyeVectorTS);
 
-
-	float3 viewDir = normalize(IN.EyePosTS -IN.PosTS);
-	
-	float2 texCoords = ParallaxMapping(IN.Tex, IN.eyeVectorTS);
-
-	if (texCoords.x > 1.0 || texCoords.y > 1.0 || texCoords.x < 0.0 || texCoords.y < 0.0)
+	if (parallaxTexCoords.x > 1.0 || parallaxTexCoords.y > 1.0 || parallaxTexCoords.x < 0.0 || parallaxTexCoords.y < 0.0)
 		discard;
 
 
-	float4 bumpMap;
-	bumpMap = txNormal.Sample(samLinear, texCoords);
-	// Expand the range of the normal value from (0, +1) to (-1, +1).
+	float4 bumpMap = txNormal.Sample(samLinear, parallaxTexCoords);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
 
@@ -331,7 +325,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 
 	if (Material.UseTexture)
 	{
-		texColor = txDiffuse.Sample(samLinear, IN.Tex);
+		texColor = txDiffuse.Sample(samLinear, parallaxTexCoords);
 
 	}
 

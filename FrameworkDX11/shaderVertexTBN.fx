@@ -284,8 +284,8 @@ PS_INPUT VS( VS_INPUT input )
 
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
-	float4 bumpMap;
-	bumpMap = txNormal.Sample(samLinear, IN.Tex);
+	
+	float4 bumpMap = txNormal.Sample(samLinear, IN.Tex);
 	// Expand the range of the normal value from (0, +1) to (-1, +1).
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);

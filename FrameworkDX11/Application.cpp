@@ -212,7 +212,7 @@ HRESULT Application::InitMesh()
 {
     //create shaders
     _Shader = new ShaderController();
-
+    //TBN_VS= conversons to tangent space is done in vertex shader and without converts Parallax to world space
     HRESULT hr = _Shader->NewShader("NoEffects", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
@@ -221,28 +221,37 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
-    hr = _Shader->NewShader("NormalMapTBNVERT", L"shaderVertexTBN.fx", _pd3dDevice, _pImmediateContext);
+    hr = _Shader->NewShader("NormalMap_TBN_VS", L"shaderVertexTBN.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
 
 
-    hr = _Shader->NewShader("ParallaxMapping", L"shaderParallaxMapping.fx", _pd3dDevice, _pImmediateContext);
+    hr = _Shader->NewShader("ParallaxMapping_TBN_VS", L"shaderParallaxMapping.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
 
-    hr = _Shader->NewShader("ParallaxMapping1", L"shaderParallaxMapping1.fx", _pd3dDevice, _pImmediateContext);
+    hr = _Shader->NewShader("ParallaxMapping", L"shaderParallaxMapping1.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
 
 
-    hr = _Shader->NewShader("ParallaxOcMapping", L"shaderParallaxOcMapping.fx", _pd3dDevice, _pImmediateContext);
+    hr = _Shader->NewShader("ParallaxOcMapping_TBN_VS", L"shaderParallaxOcMapping.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
 
-    hr = _Shader->NewShader("ParallaxOcMapping1", L"shaderParallaxOcMapping1.fx", _pd3dDevice, _pImmediateContext);
+    hr = _Shader->NewShader("ParallaxOcMapping", L"shaderParallaxOcMapping1.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
 
+
+    hr = _Shader->NewShader("ParallaxOcShadingMapping_TBN_VS", L"shaderParallaxOcShadingMapping.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    hr = _Shader->NewShader("ParallaxOcShadingMapping", L"shaderParallaxOcShadingMapping1.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    //create object mesh
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
@@ -589,10 +598,6 @@ void Application::Draw()
 
     _GameObject.draw(_pImmediateContext);
 
-
-  
-    
-
     _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
 
@@ -604,10 +609,8 @@ void Application::Draw()
 
     DimGuiManager->EndRender();
 
-
-
     // Present our back buffer to our front buffer
-    _pSwapChain->Present(0, 0);
+    _pSwapChain->Present(1, 0);
 }
 
 
@@ -651,7 +654,7 @@ void Application::setupLightForRender()
 
 void Application::Cleanup()
 {
-    _GameObject.cleanup();
+        _GameObject.cleanup();
     
         delete _controll;
         _controll = nullptr;
@@ -705,9 +708,6 @@ void Application::Cleanup()
     
         if (debugDevice)
             debugDevice->Release();
-
-
-        
 
 }
 
