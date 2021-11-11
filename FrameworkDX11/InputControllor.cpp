@@ -200,28 +200,28 @@ void InputControllor::KeyInputUpdate()
 
 			
 			////cam controlls
-			if (_KeyInput.KeyIsPress(VK_UP)) {
+			if (_KeyInput.KeyIsPress('W')) {
 				_CamreaControll->GetCurentCam()->AgustPos({
 						_CamreaControll->GetCurentCam()->GetVecFord().x *  _CamreaControll->GetCurentCam()->GetCamSpeed()  ,
 						_CamreaControll->GetCurentCam()->GetVecFord().y * _CamreaControll->GetCurentCam()->GetCamSpeed() ,
 						_CamreaControll->GetCurentCam()->GetVecFord().z * _CamreaControll->GetCurentCam()->GetCamSpeed()
 				});
 			}
-			if (_KeyInput.KeyIsPress(VK_DOWN)) {
+			if (_KeyInput.KeyIsPress('S')) {
 				_CamreaControll->GetCurentCam()->AgustPos({
 						_CamreaControll->GetCurentCam()->GetVecBack().x * _CamreaControll->GetCurentCam()->GetCamSpeed(),
 						_CamreaControll->GetCurentCam()->GetVecBack().y * _CamreaControll->GetCurentCam()->GetCamSpeed() ,
 						_CamreaControll->GetCurentCam()->GetVecBack().z * _CamreaControll->GetCurentCam()->GetCamSpeed()
 					});
 			}
-			if (_KeyInput.KeyIsPress(VK_RIGHT)) {
+			if (_KeyInput.KeyIsPress('D')) {
 				_CamreaControll->GetCurentCam()->AgustPos({
 						_CamreaControll->GetCurentCam()->GetVecRight().x * _CamreaControll->GetCurentCam()->GetCamSpeed(),
 						_CamreaControll->GetCurentCam()->GetVecRight().y * _CamreaControll->GetCurentCam()->GetCamSpeed() ,
 						_CamreaControll->GetCurentCam()->GetVecRight().z * _CamreaControll->GetCurentCam()->GetCamSpeed()
 					});
 			}
-			if (_KeyInput.KeyIsPress(VK_LEFT)) {
+			if (_KeyInput.KeyIsPress('A')) {
 				_CamreaControll->GetCurentCam()->AgustPos({
 						_CamreaControll->GetCurentCam()->GetVecLeft().x * _CamreaControll->GetCurentCam()->GetCamSpeed(),
 						_CamreaControll->GetCurentCam()->GetVecLeft().y * _CamreaControll->GetCurentCam()->GetCamSpeed() ,
