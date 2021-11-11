@@ -116,7 +116,7 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 	float HeightScale = 0.1f;
 
 	//caluate the max of the amout of movement 
-	float ParallaxLimit = -length(toEye.xy) / toEye.z;
+	float ParallaxLimit = -length(toEye.xy) / toEye.z; 
 	ParallaxLimit *= HeightScale;
 
 	float2 vOffsetDir = normalize(toEye.xy);
@@ -164,6 +164,65 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 	// return result
 	return FinalTexCoords;
 
+}
+float ParallaxSelfShadowing(float3 toLight, float2 texCoord, float3 Normal)
+{
+	float HeightScale = 0.1f;
+	float ShadowFactor = 1;
+	float minLayers = 10;
+	float maxLayers = 15;
+
+
+	float2 dx = ddx(texCoord);
+	float2 dy = ddy(texCoord);
+	float height = 1.0 - txParallax.SampleGrad(samLinear, texCoord, dx, dy).x;
+
+	float ParallaxScale = HeightScale * (1.0 - height);
+	//calulate light for suface orinated to light
+	if (dot(Normal, toLight) > 0)
+	{
+		ShadowFactor = 0;
+		float numSamplesUnderSurface = 0;
+
+		float numLayers = lerp(maxLayers, minLayers, dot(Normal, toLight));
+
+		float layerHeight = height / numLayers;
+		float2 texStep = ParallaxScale * toLight.xy / numLayers;
+
+		float CurrentLayerHeight = height - layerHeight;
+		float2 CurrentTexCoord = texCoord + texStep;
+		float HeightFromTex = 1.0 - txParallax.SampleGrad(samLinear, CurrentTexCoord, dx, dy).r;
+		int Step = 1;
+
+		//find showdow factor
+		while (CurrentLayerHeight > 0)
+		{
+			if (HeightFromTex < CurrentLayerHeight)
+			{
+				// calculate partial shadowing factor
+				numSamplesUnderSurface += 1;
+				float newShadowFactor = (CurrentLayerHeight - HeightFromTex) * (1.0 - Step / numLayers);
+				ShadowFactor = max(ShadowFactor, newShadowFactor);
+			}
+			//go to next layer
+			Step += 1;
+			CurrentLayerHeight -= layerHeight;
+			CurrentTexCoord += texStep;
+			HeightFromTex = txParallax.SampleGrad(samLinear, CurrentTexCoord, dx, dy).r;
+		}
+
+		//set shadow factor
+		if (numSamplesUnderSurface < 1)
+		{
+			ShadowFactor = 1;
+		}
+		else
+		{
+			ShadowFactor = 0.9 - ShadowFactor;
+		}
+	}
+	
+	return ShadowFactor;
 }
 
 float4 DoDiffuse(Light light, float3 L, float3 N)
@@ -370,9 +429,19 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	if (Material.UseTexture)
 	{
 		texColor = txDiffuse.Sample(samLinear, parallaxTexCoords);
-	}
 
-	float4 finalColor = (emissive + ambient + diffuse + specular) * texColor;
+	}
+	float shadow;
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		
+		//negative norm to get right suface direction
+		shadow = ParallaxSelfShadowing(IN.lightVectorTS[i], parallaxTexCoords, -IN.NormTS);
+		diffuse = diffuse * shadow;
+		specular = specular * shadow;
+	}
+	
+	float4 finalColor = (emissive + ambient + diffuse  + specular ) * texColor;
 
 	return finalColor;
 }

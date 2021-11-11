@@ -98,14 +98,6 @@ struct PS_INPUT
 };
 
 
-
-float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
-{
-	// Transform from tangent space to world space.
-	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
-	return tangentSpaceNormal;
-}
-
 float4 DoDiffuse(Light light, float3 L, float3 N)
 {
 	float NdotL = max(0, dot(N, L));
@@ -139,7 +131,7 @@ struct LightingResult
 	float4 Specular;
 };
 
-LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N, float3x3 TBN_inv)
+LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N)
 {
 	LightingResult result;
 
@@ -159,7 +151,7 @@ LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, f
 	return result;
 }
 
-LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N,float3x3 TBN_inv)
+LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N)
 {
 	LightingResult result;
 
@@ -180,7 +172,7 @@ float DoSpotCone(Light light, float3 L)
 	return smoothstep(minCos, maxCos, cosAngle);
 }
 
-LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N,float3x3 TBN_inv)
+LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N)
 {
 	LightingResult result;
 
@@ -188,7 +180,6 @@ LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, fl
 	float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
 	float distance = length(LightDirectionToVertex);
 	LightDirectionToVertex = LightDirectionToVertex / distance;
-
 
 	float3 L = (light.Position - vertexPos).xyz;
 	distance = length(L);
@@ -204,11 +195,10 @@ LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, fl
 	return result;
 }
 
-LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
+LightingResult ComputeLighting(float4 vertexPos, float3 N)
 {
 	float3 vertexToEye = (EyePosition - vertexPos).xyz;
-	//float3 eyeVectorTS = VectorToTangentSpace(vertexToEye.xyz, TBN_inv);
-
+	
 	LightingResult totalResult = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
 
 	[unroll]
@@ -221,11 +211,11 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 		
 		
 		if (Lights[i].LightType == POINT_LIGHT)
-			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
 		if (Lights[i].LightType == DIRECTIONAL_LIGHT)
-			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N);
 		if (Lights[i].LightType == SPOT_LIGHT)
-			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N);
 		
 		
 		totalResult.Diffuse += result.Diffuse;
@@ -280,15 +270,14 @@ PS_INPUT VS( VS_INPUT input )
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
 	
-	// get bupmap in world space
-	float3 texNormal = txNormal.Sample(samLinear, IN.Tex).rgb;
-	//decompress from [0,1] to [-1,1] range
-	float3 texNorm = 2.0f * texNormal - 1.0f;
+	float4 bumpMap = txNormal.Sample(samLinear, IN.Tex);
+	// Expand the range of the normal value from (0, +1) to (-1, +1).
+	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	//transform from tangent space to world space
-	float3 bumpedNorm = mul(texNorm, IN.TBN);
+	float3 bumpedNorm = mul(bumpMap, IN.TBN);
 
 
-	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm, IN.TBN_inv);
+	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm);
 
 	float4 texColor = { 1, 1, 1, 1 };
 

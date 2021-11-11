@@ -427,6 +427,12 @@
     <FxCompile Include="shader.fx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </FxCompile>
+    <None Include="shaderParallaxOcShadingMapping.fx">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shaderParallaxOcShadingMapping1.fx">
+      <FileType>Document</FileType>
+    </None>
     <None Include="shaderParallaxOcMapping.fx">
       <FileType>Document</FileType>
     </None>

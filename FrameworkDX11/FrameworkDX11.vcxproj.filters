@@ -238,5 +238,11 @@
     <None Include="shaderParallaxOcMapping.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaderParallaxOcShadingMapping.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaderParallaxOcShadingMapping1.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

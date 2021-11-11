@@ -9,7 +9,7 @@
 //--------------------------------------------------------------------------------------
 // Constant Buffer Variables
 //--------------------------------------------------------------------------------------
-cbuffer ConstantBuffer : register(b0)
+cbuffer ConstantBuffer : register( b0 )
 {
 	matrix World;
 	matrix View;
@@ -76,12 +76,12 @@ cbuffer LightProperties : register(b2)
 	float4 GlobalAmbient;               // 16 bytes
 										//----------------------------------- (16 byte boundary)
 	Light Lights[MAX_LIGHTS];           // 80 * 8 = 640 bytes
-};
+}; 
 
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
 {
-	float4 Pos : POSITION;
+    float4 Pos : POSITION;
 	float3 Norm : NORMAL;
 	float2 Tex : TEXCOORD0;
 	float3 Tangent : tangent;
@@ -90,29 +90,26 @@ struct VS_INPUT
 
 struct PS_INPUT
 {
-	float4 Pos : SV_POSITION;
+    float4 Pos : SV_POSITION;
 	float4 worldPos : POSITION;
 	float3 Norm : NORMAL;
 	float2 Tex : TEXCOORD0;
-	float3 eyeVectorTS: Eye;
-	float3 lightVectorTS[MAX_LIGHTS]:Lightvec;
-	float3 PosTS : POSITION1;
-	float3 EyePosTS : POSITION2;
-	float3 NormTS : NORMAL1;
+	float3x3 TBN_inv:TBNINV;
+	float3x3 TBN:TBN;
 };
 
 
 
-float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
+float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 {
 	// Transform from tangent space to world space.
 	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
 	return tangentSpaceNormal;
 }
 
+//parralax mapping occlusion
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
-
 	float HeightScale = 0.1f;
 
 	//caluate the max of the amout of movement 
@@ -165,6 +162,65 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 	return FinalTexCoords;
 
 }
+float ParallaxSelfShadowing(float3 toLight, float2 texCoord, float3 Normal)
+{
+	float HeightScale = 0.1f;
+	float ShadowFactor = 1;
+	float minLayers = 10;
+	float maxLayers = 15;
+
+
+	float2 dx = ddx(texCoord);
+	float2 dy = ddy(texCoord);
+	float height = 1.0 - txParallax.SampleGrad(samLinear, texCoord, dx, dy).x;
+
+	float ParallaxScale = HeightScale * (1.0 - height);
+	//calulate light for suface orinated to light
+	if (dot(Normal, toLight) > 0)
+	{
+		ShadowFactor = 0;
+		float numSamplesUnderSurface = 0;
+
+		float numLayers = lerp(maxLayers, minLayers, dot(Normal, toLight));
+
+		float layerHeight = height / numLayers;
+		float2 texStep = ParallaxScale * toLight.xy / numLayers;
+
+		float CurrentLayerHeight = height - layerHeight;
+		float2 CurrentTexCoord = texCoord + texStep;
+		float HeightFromTex = 1.0 - txParallax.SampleGrad(samLinear, CurrentTexCoord, dx, dy).r;
+		int Step = 1;
+
+		//find showdow factor
+		while (CurrentLayerHeight > 0)
+		{
+			if (HeightFromTex < CurrentLayerHeight)
+			{
+				// calculate partial shadowing factor
+				numSamplesUnderSurface += 1;
+				float newShadowFactor = (CurrentLayerHeight - HeightFromTex) * (1.0 - Step / numLayers);
+				ShadowFactor = max(ShadowFactor, newShadowFactor);
+			}
+			//go to next layer
+			Step += 1;
+			CurrentLayerHeight -= layerHeight;
+			CurrentTexCoord += texStep;
+			HeightFromTex = txParallax.SampleGrad(samLinear, CurrentTexCoord, dx, dy).r;
+		}
+
+		//set shadow factor
+		if (numSamplesUnderSurface < 1)
+		{
+			ShadowFactor = 1;
+		}
+		else
+		{
+			ShadowFactor = 0.9 - ShadowFactor;
+		}
+	}
+
+	return ShadowFactor;
+}
 
 float4 DoDiffuse(Light light, float3 L, float3 N)
 {
@@ -174,7 +230,7 @@ float4 DoDiffuse(Light light, float3 L, float3 N)
 
 float4 DoSpecular(Light lightObject, float3 vertexToEye, float3 lightDirectionToVertex, float3 Normal)
 {
-	float4 lightDir = float4(normalize(-lightDirectionToVertex), 1);
+	float4 lightDir = float4(normalize(-lightDirectionToVertex),1);
 	vertexToEye = normalize(vertexToEye);
 
 	float lightIntensity = saturate(dot(Normal, lightDir));
@@ -184,8 +240,6 @@ float4 DoSpecular(Light lightObject, float3 vertexToEye, float3 lightDirectionTo
 		float3  reflection = normalize(2 * lightIntensity * Normal - lightDir);
 		specular = pow(saturate(dot(reflection, vertexToEye)), Material.SpecularPower); // 32 = specular power
 	}
-
-
 
 	return specular;
 }
@@ -201,26 +255,28 @@ struct LightingResult
 	float4 Specular;
 };
 
-LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N, float3 lightVectorTS)
+LightingResult DoPointLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N, float3x3 TBN_inv)
 {
 	LightingResult result;
 
 	float3 LightDirectionToVertex = (vertexPos - light.Position).xyz;
 	float distance = length(LightDirectionToVertex);
-	LightDirectionToVertex = LightDirectionToVertex / distance;
+	LightDirectionToVertex = LightDirectionToVertex  / distance;
 
 	float3 vertexToLight = (light.Position - vertexPos).xyz;
 	distance = length(vertexToLight);
+	vertexToLight = vertexToLight / distance;
 
 	float attenuation = DoAttenuation(light, distance);
+	attenuation = 1;
 
-	result.Diffuse = DoDiffuse(light, lightVectorTS, N) * attenuation;
-	result.Specular = DoSpecular(light, vertexToEye, -lightVectorTS, N) * attenuation;
+	result.Diffuse = DoDiffuse(light, vertexToLight, N) * attenuation;
+	result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation;
 
 	return result;
 }
 
-LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N, float3 lightVectorTS)
+LightingResult DoDirectionalLight(Light light, float3 V, float4 P, float3 N,float3x3 TBN_inv)
 {
 	LightingResult result;
 
@@ -241,7 +297,7 @@ float DoSpotCone(Light light, float3 L)
 	return smoothstep(minCos, maxCos, cosAngle);
 }
 
-LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N, float3 lightVectorTS)
+LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, float3 N,float3x3 TBN_inv)
 {
 	LightingResult result;
 
@@ -254,18 +310,20 @@ LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, fl
 	float3 L = (light.Position - vertexPos).xyz;
 	distance = length(L);
 	L = L / distance;
+	
 
 	float attenuation = DoAttenuation(light, distance);
 	float spotIntensity = DoSpotCone(light, L);
 
-	result.Diffuse = DoDiffuse(light, lightVectorTS, N) * attenuation * spotIntensity;
-	result.Specular = DoSpecular(light, vertexToEye, lightVectorTS, N) * attenuation * spotIntensity;
+	result.Diffuse = DoDiffuse(light, L, N) * attenuation * spotIntensity;
+	result.Specular = DoSpecular(light, vertexToEye, LightDirectionToVertex, N) * attenuation * spotIntensity;
 
 	return result;
 }
 
-LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 vertexToEye, float3 lightVectorTS[MAX_LIGHTS])
+LightingResult ComputeLighting(float4 vertexPos, float3 N, float3x3 TBN_inv)
 {
+	float3 vertexToEye = (EyePosition - vertexPos).xyz;
 
 	LightingResult totalResult = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
 
@@ -274,18 +332,18 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 vertexToEye, f
 	{
 		LightingResult result = { { 0, 0, 0, 0 },{ 0, 0, 0, 0 } };
 
-		if (!Lights[i].Enabled)
+		if (!Lights[i].Enabled) 
 			continue;
-
-
+		
+		
 		if (Lights[i].LightType == POINT_LIGHT)
-			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N, lightVectorTS[i]);
+			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
 		if (Lights[i].LightType == DIRECTIONAL_LIGHT)
-			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N, lightVectorTS[i]);
+			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
 		if (Lights[i].LightType == SPOT_LIGHT)
-			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N, lightVectorTS[i]);
-
-
+			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N, TBN_inv);
+		
+		
 		totalResult.Diffuse += result.Diffuse;
 		totalResult.Specular += result.Specular;
 	}
@@ -301,43 +359,33 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N, float3 vertexToEye, f
 //--------------------------------------------------------------------------------------
 
 
+//can change this to calualte vertextoeye and vertextolight in vertex shader to improve efficeny as then they will be caluated 3 times foe each vertex insead
+//of for each pixle. To do this another function would have to be created to caluate the data for each light and that data would have to be passed to the pixle shader.
+// this has not be done here as for the time bing is is esayer to keep the lighting moddle the 
 
-PS_INPUT VS(VS_INPUT input)
+
+PS_INPUT VS( VS_INPUT input )
 {
-	PS_INPUT output = (PS_INPUT)0;
-	output.Pos = mul(input.Pos, World);
+    PS_INPUT output = (PS_INPUT)0;
+    output.Pos = mul( input.Pos, World );
 	output.worldPos = output.Pos;
-	output.Pos = mul(output.Pos, View);
-	output.Pos = mul(output.Pos, Projection);
+    output.Pos = mul( output.Pos, View );
+    output.Pos = mul( output.Pos, Projection );
 
 	// multiply the normal by the world transform (to go from model space to world space)
 	output.Norm = mul(float4(input.Norm, 0), World).xyz;
 
 	output.Tex = input.Tex;
-
+  
 	// Build TBN matrix
 	float3 T = normalize(mul(input.Tangent, World));
 	float3 B = normalize(mul(input.BiTangent, World));
 	float3 N = normalize(mul(input.Norm, World));
 	float3x3 TBN = float3x3(T, B, N);
-	float3x3 TBN_inv = transpose(TBN);
+	output.TBN_inv = transpose(TBN);
+	output.TBN = TBN;
 
-	float3 vertexToEye = EyePosition.xyz - output.worldPos.xyz;
-	output.eyeVectorTS = VectorToTangentSpace(vertexToEye.xyz, TBN_inv);
-
-
-	for (int i = 0; i < MAX_LIGHTS; ++i)
-	{
-
-		float3 vertexToLight = Lights[i].Position - output.worldPos.xyz;
-		output.lightVectorTS[i] = VectorToTangentSpace(vertexToLight.xyz, TBN_inv);
-
-	}
-
-	output.PosTS = VectorToTangentSpace(output.worldPos.xyz, TBN_inv);
-	output.EyePosTS = VectorToTangentSpace(EyePosition.xyz, TBN_inv);
-	output.NormTS = VectorToTangentSpace(output.Norm.xyz, TBN_inv);
-	return output;
+    return output;
 }
 
 
@@ -347,18 +395,24 @@ PS_INPUT VS(VS_INPUT input)
 
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
-
-	float2 parallaxTexCoords = Parallax(IN.Tex, IN.eyeVectorTS,IN.NormTS);
+	
+	float3 vertexToEye = normalize(EyePosition - IN.worldPos).xyz;
+	float3 vertexToEyeTS = mul(vertexToEye, IN.TBN_inv);
+	
+	
+	float2 parallaxTexCoords = Parallax(IN.Tex, vertexToEyeTS, IN.Norm);
 
 	if (parallaxTexCoords.x > 1.0 || parallaxTexCoords.y > 1.0 || parallaxTexCoords.x < 0.0 || parallaxTexCoords.y < 0.0)
 		discard;
 
-
+	
 	float4 bumpMap = txNormal.Sample(samLinear, parallaxTexCoords);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
-	bumpMap = float4(normalize(bumpMap.xyz), 1);
+	//transform from tangent space to world space
+	float3 bumpedNorm = normalize(mul(bumpMap, IN.TBN));
 
-	LightingResult lit = ComputeLighting(IN.worldPos, bumpMap,IN.eyeVectorTS,IN.lightVectorTS);
+
+	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm, IN.TBN);
 
 	float4 texColor = { 1, 1, 1, 1 };
 
@@ -370,9 +424,18 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	if (Material.UseTexture)
 	{
 		texColor = txDiffuse.Sample(samLinear, parallaxTexCoords);
-	}
 
-	float4 finalColor = (emissive + ambient + diffuse + specular) * texColor;
+	}
+	float shadow;
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		float3 vertexToLight = normalize(Lights[i].Position - IN.worldPos).xyz;
+		//negative norm to get right suface direction
+		shadow = ParallaxSelfShadowing(vertexToLight, parallaxTexCoords, -IN.Norm);
+		diffuse = diffuse * shadow;
+		specular = specular * shadow;
+	}
+	float4 finalColor = (emissive + ambient + diffuse  + specular ) * texColor;
 
 	return finalColor;
 }
