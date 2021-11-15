@@ -424,6 +424,9 @@
     <Image Include="Resources\stone.dds" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Quad.fx">
+      <FileType>Document</FileType>
+    </None>
     <FxCompile Include="shader.fx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </FxCompile>

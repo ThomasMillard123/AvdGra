@@ -52,6 +52,38 @@ private:
 
 	ID3D11Buffer* _pLightConstantBuffer;
 
+
+	//post processing
+	//--------------------------------------------------------
+	
+	// RTT front
+	ID3D11Texture2D* g_pRTTRrenderTargetTexture;
+	ID3D11RenderTargetView* g_pRTTRenderTargetView;
+
+	//RTT Depth
+	ID3D11Texture2D* _pRTTDepthStencil = nullptr;
+	ID3D11DepthStencilView* g_pRTTDepthStencilView;
+
+	// shader resource view for the texture
+	ID3D11ShaderResourceView* g_pRTTShaderResourceView;
+
+	bool isRTT = false;
+
+
+	//full screen quad
+	struct SCREEN_VERTEX
+	{
+		XMFLOAT3 pos;
+		XMFLOAT2 tex;
+	};
+
+	ID3D11Buffer* g_pScreenQuadVB = nullptr;
+	
+	ID3D11SamplerState* m_pPointrLinear;
+	//------------------------------------------------------
+
+
+
 	XMMATRIX                _View;
 	XMMATRIX                _Projection;
 

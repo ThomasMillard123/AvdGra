@@ -251,6 +251,16 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+
+    //quadShader
+
+    hr = _Shader->NewFullScreenShader("Full", L"Quad.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+
+
+
     //create object mesh
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
@@ -302,6 +312,37 @@ HRESULT Application::InitWorld(int width, int height)
     _pCamControll->AddCam(_Camrea);
 
     _controll->AddCam(_pCamControll);
+
+
+
+
+    SCREEN_VERTEX svQuad[4];
+
+    svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
+    svQuad[0].tex = XMFLOAT2(0.0f, 0.0f);
+
+    svQuad[1].pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+    svQuad[1].tex = XMFLOAT2(1.0f, 0.0f);
+
+    svQuad[2].pos = XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    svQuad[2].tex = XMFLOAT2(0.0f, 1.0f);
+
+    svQuad[3].pos = XMFLOAT3(1.0f, -1.0f, 0.0f);
+    svQuad[3].tex = XMFLOAT2(1.0f, 1.0f);
+
+
+    D3D11_BUFFER_DESC bd = {};
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SCREEN_VERTEX) * 4;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA InitData = {};
+    InitData.pSysMem = svQuad;
+    HRESULT hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &g_pScreenQuadVB);
+    if (FAILED(hr))
+        return hr;
+
 
     return S_OK;
 }
@@ -502,17 +543,99 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
-    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
+    //_pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
 
-    // Setup the viewport
-    D3D11_VIEWPORT vp;
-    vp.Width = (FLOAT)width;
-    vp.Height = (FLOAT)height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    _pImmediateContext->RSSetViewports(1, &vp);
+
+
+    // Create a render target view 2nd
+
+
+    //RTT
+
+    D3D11_TEXTURE2D_DESC textureDesc;
+    ZeroMemory(&textureDesc, sizeof(textureDesc));
+    textureDesc.Width = width; 
+    textureDesc.Height = height; 
+    textureDesc.MipLevels = 1;
+    textureDesc.ArraySize = 1;
+    textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    textureDesc.SampleDesc.Count = 1;
+    textureDesc.Usage = D3D11_USAGE_DEFAULT;
+    textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    textureDesc.CPUAccessFlags = 0;
+    textureDesc.MiscFlags = 0;
+
+   hr= _pd3dDevice->CreateTexture2D(&textureDesc, NULL, &g_pRTTRrenderTargetTexture);
+   if (FAILED(hr))
+       return hr;
+
+    D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc;
+    // Setup the description of the render target view.
+    renderTargetViewDesc.Format = textureDesc.Format;
+    renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    renderTargetViewDesc.Texture2D.MipSlice = 0;
+
+
+    hr = _pd3dDevice->CreateRenderTargetView(g_pRTTRrenderTargetTexture, &renderTargetViewDesc, &g_pRTTRenderTargetView);
+
+    if (FAILED(hr))
+        return hr;
+
+
+    // Create depth stencil texture
+    D3D11_TEXTURE2D_DESC descDepthRTT = {};
+    descDepthRTT.Width = width;
+    descDepthRTT.Height = height;
+    descDepthRTT.MipLevels = 1;
+    descDepthRTT.ArraySize = 1;
+    descDepthRTT.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    descDepthRTT.SampleDesc.Count = 1;
+    descDepthRTT.SampleDesc.Quality = 0;
+    descDepthRTT.Usage = D3D11_USAGE_DEFAULT;
+    descDepthRTT.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    descDepthRTT.CPUAccessFlags = 0;
+    descDepthRTT.MiscFlags = 0;
+    hr = _pd3dDevice->CreateTexture2D(&descDepthRTT, nullptr, &_pRTTDepthStencil);
+    if (FAILED(hr))
+        return hr;
+
+    // Create the depth stencil view
+    D3D11_DEPTH_STENCIL_VIEW_DESC descDSVRTT = {};
+    descDSVRTT.Format = descDepthRTT.Format;
+    descDSVRTT.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    descDSVRTT.Texture2D.MipSlice = 0;
+
+    hr = _pd3dDevice->CreateDepthStencilView(_pRTTDepthStencil, &descDSVRTT, &g_pRTTDepthStencilView);
+    if (FAILED(hr))
+        return hr;
+
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc;
+    // Setup the description of the shader resource view.
+    shaderResourceViewDesc.Format = textureDesc.Format;
+    shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shaderResourceViewDesc.Texture2D.MostDetailedMip = 0;
+    shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+    // Create the shader resource view.
+    hr = _pd3dDevice->CreateShaderResourceView(g_pRTTRrenderTargetTexture, &shaderResourceViewDesc, &g_pRTTShaderResourceView);
+    if (FAILED(hr))
+        return hr;
+
+
+
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pPointrLinear);
+    if (FAILED(hr))
+        return hr;
 
     hr = InitMesh();
     if (FAILED(hr))
@@ -535,6 +658,7 @@ HRESULT Application::InitDevice()
     //creat Lights
     _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     _pLightContol->AddLight("Point", true, LightType::SpotLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(10.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+
     return S_OK;
 }
 void Application::Update()
@@ -552,13 +676,22 @@ void Application::Update()
 
 void Application::Draw()
 {
+    // Setup the viewport
+    D3D11_VIEWPORT vp;
+    vp.Width = (FLOAT)_viewWidth;
+    vp.Height = (FLOAT)	_viewHeight;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    _pImmediateContext->RSSetViewports(1, &vp);
    
-
+    //first
+    _pImmediateContext->OMSetRenderTargets(1, &g_pRTTRenderTargetView, g_pRTTDepthStencilView);
     // Clear the back buffer
-    _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::MidnightBlue);
-
+    _pImmediateContext->ClearRenderTargetView(g_pRTTRenderTargetView, Colors::MidnightBlue);
     // Clear the depth buffer to 1.0 (max depth)
-    _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    _pImmediateContext->ClearDepthStencilView(g_pRTTDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
     
 
@@ -566,18 +699,17 @@ void Application::Draw()
     XMFLOAT4X4 WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
     XMMATRIX mGO = XMLoadFloat4x4(&WorldAsFloat);
 
-
     XMFLOAT4X4 viewAsFloats = _pCamControll->GetCurentCam()->GetView();
     XMFLOAT4X4 projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
 
-    XMMATRIX view = XMLoadFloat4x4(&viewAsFloats);
-    XMMATRIX projection = XMLoadFloat4x4(&projectionAsFloats);
+    XMMATRIX RTTview = XMLoadFloat4x4(&viewAsFloats);
+    XMMATRIX RTTprojection = XMLoadFloat4x4(&projectionAsFloats);
 
     // store this and the view / projection in a constant buffer for the vertex shader to use
     ConstantBuffer cb1;
     cb1.mWorld = XMMatrixTranspose(mGO);
-    cb1.mView = XMMatrixTranspose(view);
-    cb1.mProjection = XMMatrixTranspose(projection);
+    cb1.mView = XMMatrixTranspose(RTTview);
+    cb1.mProjection = XMMatrixTranspose(RTTprojection);
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
     _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
@@ -585,10 +717,20 @@ void Application::Draw()
     setupLightForRender();
 
     // Render the cube
+
+
+    UINT strides = sizeof(SCREEN_VERTEX);
+    UINT offsets = 0;
+    ID3D11Buffer* pBuffers[1] = { g_pScreenQuadVB };
+
+    _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
+    
+    // Set primitive topology
+    _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
-
     _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
     _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
 
@@ -596,10 +738,100 @@ void Application::Draw()
     ID3D11Buffer* materialCB = _GameObject.GetAppearance()->getMaterialConstantBuffer();
     _pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
 
+
+    //setTextures to buffer
+    _GameObject.GetAppearance()->SetTextures(_pImmediateContext);
+
+
     _GameObject.draw(_pImmediateContext);
 
-    _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
+    //post
+    if (isRTT) {
+        //RTT
+        // Setup the viewport
+        D3D11_VIEWPORT vp2;
+        vp.Width = (FLOAT)_viewWidth;
+        vp.Height = (FLOAT)_viewHeight;
+        vp.MinDepth = 0.0f;
+        vp.MaxDepth = 1.0f;
+        vp.TopLeftX = 0;
+        vp.TopLeftY = 0;
+        _pImmediateContext->RSSetViewports(1, &vp2);
+
+        _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
+        // Clear the back buffer
+        _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::LightBlue);
+        // Clear the depth buffer to 1.0 (max depth)
+        _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+
+        //CB
+
+        //viewAsFloats = _pCamControll->GetCurentCam()->GetView();
+        //projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
+
+        //XMMATRIX view = XMLoadFloat4x4(&viewAsFloats);
+        //XMMATRIX projection = XMLoadFloat4x4(&projectionAsFloats);
+        //cb1.mView = XMMatrixTranspose(view);
+        //cb1.mProjection = XMMatrixTranspose(projection);
+
+        //_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+
+        // Render the cube
+        _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
+        _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+
+        _pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
+
+        //setTextures to buffer
+        _pImmediateContext->PSSetShaderResources(0, 1, &g_pRTTShaderResourceView);
+
+        _GameObject.draw(_pImmediateContext);
+        
+        //lights
+
+         _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
+    }
+    else
+    {
+        // Setup the viewport
+        D3D11_VIEWPORT vp2;
+        vp.Width = (FLOAT)_viewWidth;
+        vp.Height = (FLOAT)_viewHeight;
+        vp.MinDepth = 0.0f;
+        vp.MaxDepth = 1.0f;
+        vp.TopLeftX = 0;
+        vp.TopLeftY = 0;
+        _pImmediateContext->RSSetViewports(1, &vp2);
+
+        _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
+        // Clear the back buffer
+        _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::LightBlue);
+        // Clear the depth buffer to 1.0 (max depth)
+        _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+        UINT strides = sizeof(SCREEN_VERTEX);
+        UINT offsets = 0;
+        ID3D11Buffer* pBuffers[1] = { g_pScreenQuadVB };
+
+        _pImmediateContext->IASetInputLayout(_Shader->GetFSShaderList()[0]._pVertexLayout);
+        _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+        _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+        _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+        _pImmediateContext->VSSetShader(_Shader->GetFSShaderList()[0]._pVertexShader, nullptr, 0);
+        _pImmediateContext->PSSetShader(_Shader->GetFSShaderList()[0]._pPixelShader, nullptr, 0);
+
+        _pImmediateContext->PSSetShaderResources(0, 1, &g_pRTTShaderResourceView);
+
+        _pImmediateContext->Draw(4, 0);
+    }
+
+   
 
     DimGuiManager->BeginRender();
     DimGuiManager->DrawCamMenu(_pCamControll);

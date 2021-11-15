@@ -109,6 +109,78 @@ void ShaderController::SetShaderData(UINT ShaderSet)
     CurrentShader = ShaderSet;
 }
 
+HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+
+
+
+
+    // Compile the vertex shader
+    ID3DBlob* pVSBlob = nullptr;
+    HRESULT hr = CompileShaderFromFile(szFileName, "QuadVS", "vs_4_0", &pVSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+  
+    // Create the vertex shader
+    hr = pd3dDevice->CreateVertexShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &g_pQuadVS);
+    if (FAILED(hr))
+    {
+        pVSBlob->Release();
+        return hr;
+    }
+    
+
+    // Define the input layout
+    D3D11_INPUT_ELEMENT_DESC layout[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    
+    };
+    UINT numElements = ARRAYSIZE(layout);
+
+    // Create the input layout
+    hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+        pVSBlob->GetBufferSize(), &g_pQuadLayout);
+
+    pVSBlob->Release();
+    if (FAILED(hr))
+        return hr;
+
+ 
+    // Compile the pixel shader
+    ID3DBlob* pPSBlob = nullptr;
+     hr = CompileShaderFromFile(szFileName, "QuadPS", "ps_4_0", &pPSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    // Create the pixel shader
+    hr = pd3dDevice->CreatePixelShader(pPSBlob->GetBufferPointer(), pPSBlob->GetBufferSize(), nullptr, &g_pQuadPS);
+    pPSBlob->Release();
+    if (FAILED(hr))
+        return hr;
+
+
+    ShaderData NewShaderData = ShaderData(Name, g_pQuadVS, g_pQuadPS, g_pQuadLayout);
+
+    _FullScreenShaderData.push_back(NewShaderData);
+
+
+
+    return hr;
+
+    
+}
+
 HRESULT ShaderController::CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
 {
     HRESULT hr = S_OK;

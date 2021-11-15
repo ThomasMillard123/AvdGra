@@ -48,13 +48,18 @@ public:
 	HRESULT NewShader(string Name,const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
 
 	vector<ShaderData> GetShaderList() { return _ShaderData; }
-
 	ShaderData GetShaderData();
 	void SetShaderData(UINT ShaderSet);
+
+
+	HRESULT NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
+	vector<ShaderData> GetFSShaderList() { return _FullScreenShaderData; }
+	
 
 private:
 
 	vector<ShaderData>_ShaderData;
+	vector<ShaderData>_FullScreenShaderData;
 
 	UINT CurrentShader;
 	
@@ -68,6 +73,8 @@ private:
 	ID3D11PixelShader* _pPixelShader = nullptr;
 	ID3D11InputLayout* _pVertexLayout = nullptr;
 
-
+	ID3D11InputLayout* g_pQuadLayout = nullptr;
+	ID3D11VertexShader* g_pQuadVS = nullptr;
+	ID3D11PixelShader* g_pQuadPS = nullptr;
 };
 

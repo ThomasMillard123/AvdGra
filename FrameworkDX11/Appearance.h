@@ -54,6 +54,8 @@ public:
 	void Draw(ID3D11DeviceContext* pImmediateContext);
 
 
+	void SetTextures(ID3D11DeviceContext* pImmediateContext);
+
 private:
 	//data
 	ID3D11Buffer* m_pVertexBuffer;

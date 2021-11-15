@@ -244,5 +244,8 @@
     <None Include="shaderParallaxOcShadingMapping1.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Quad.fx">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

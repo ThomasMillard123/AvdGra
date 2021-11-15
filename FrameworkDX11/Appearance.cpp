@@ -27,12 +27,21 @@ void Appearance::Update(ID3D11DeviceContext* pContext)
 void Appearance::Draw(ID3D11DeviceContext* pImmediateContext)
 {
 	
-	pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureResourceView);
-	pImmediateContext->PSSetShaderResources(1, 1, &m_pNormalMapResourceView);
-	pImmediateContext->PSSetShaderResources(2, 1, &m_pParralaxMapResourceView);
+	// Set vertex buffer
+	UINT stride = sizeof(SimpleVertex);
+	UINT offset = 0;
+	pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+
 	pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
 
 	pImmediateContext->DrawIndexed(NUM_VERTICES, 0, 0);
+}
+
+void Appearance::SetTextures(ID3D11DeviceContext* pImmediateContext)
+{
+	pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureResourceView);
+	pImmediateContext->PSSetShaderResources(1, 1, &m_pNormalMapResourceView);
+	pImmediateContext->PSSetShaderResources(2, 1, &m_pParralaxMapResourceView);
 }
 
 void Appearance::CleanUp()
