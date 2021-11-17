@@ -40,6 +40,10 @@ struct _Material
 	bool    UseTexture;     // 4 bytes
 	float2  Padding;        // 8 bytes
 							//----------------------------------- (16 byte boundary)
+	float               HightScale;
+	float               MaxLayers;
+	float               MinLayers;
+	float               Padding1;
 };  // Total:               // 80 bytes ( 5 * 16 )
 
 cbuffer MaterialProperties : register(b1)

@@ -296,6 +296,14 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+    // Create the PostProcessing constant buffer
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(PostProcessingCB);
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bd.CPUAccessFlags = 0;
+    hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pPostProcessingConstantBuffer);
+    if (FAILED(hr))
+        return hr;
 
     return hr;
 }
@@ -313,8 +321,12 @@ HRESULT Application::InitWorld(int width, int height)
 
     _controll->AddCam(_pCamControll);
 
-
-
+    //postSettings
+    postSettings.UseColour = false;
+    postSettings.Color = XMFLOAT4{ 1.0f,1.0f,1.0f,0.0f };
+    postSettings.UseBloom = false;
+    postSettings.UseDepthOfF = false;
+    postSettings.UseHDR = false;
 
     SCREEN_VERTEX svQuad[4];
 
@@ -687,6 +699,7 @@ void Application::Draw()
     _pImmediateContext->RSSetViewports(1, &vp);
    
     //first
+    
     _pImmediateContext->OMSetRenderTargets(1, &g_pRTTRenderTargetView, g_pRTTDepthStencilView);
     // Clear the back buffer
     _pImmediateContext->ClearRenderTargetView(g_pRTTRenderTargetView, Colors::MidnightBlue);
@@ -748,15 +761,15 @@ void Application::Draw()
 
     //post
     if (isRTT) {
-        //RTT
+        //RTT to cube
         // Setup the viewport
         D3D11_VIEWPORT vp2;
-        vp.Width = (FLOAT)_viewWidth;
-        vp.Height = (FLOAT)_viewHeight;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-        vp.TopLeftX = 0;
-        vp.TopLeftY = 0;
+        vp2.Width = (FLOAT)_viewWidth;
+        vp2.Height = (FLOAT)_viewHeight;
+        vp2.MinDepth = 0.0f;
+        vp2.MaxDepth = 1.0f;
+        vp2.TopLeftX = 0;
+        vp2.TopLeftY = 0;
         _pImmediateContext->RSSetViewports(1, &vp2);
 
         _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
@@ -765,18 +778,6 @@ void Application::Draw()
         // Clear the depth buffer to 1.0 (max depth)
         _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
-
-        //CB
-
-        //viewAsFloats = _pCamControll->GetCurentCam()->GetView();
-        //projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
-
-        //XMMATRIX view = XMLoadFloat4x4(&viewAsFloats);
-        //XMMATRIX projection = XMLoadFloat4x4(&projectionAsFloats);
-        //cb1.mView = XMMatrixTranspose(view);
-        //cb1.mProjection = XMMatrixTranspose(projection);
-
-        //_pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
         // Render the cube
         _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
@@ -800,12 +801,12 @@ void Application::Draw()
     {
         // Setup the viewport
         D3D11_VIEWPORT vp2;
-        vp.Width = (FLOAT)_viewWidth;
-        vp.Height = (FLOAT)_viewHeight;
-        vp.MinDepth = 0.0f;
-        vp.MaxDepth = 1.0f;
-        vp.TopLeftX = 0;
-        vp.TopLeftY = 0;
+        vp2.Width = (FLOAT)_viewWidth;
+        vp2.Height = (FLOAT)_viewHeight;
+        vp2.MinDepth = 0.0f;
+        vp2.MaxDepth = 1.0f;
+        vp2.TopLeftX = 0;
+        vp2.TopLeftY = 0;
         _pImmediateContext->RSSetViewports(1, &vp2);
 
         _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
@@ -826,6 +827,9 @@ void Application::Draw()
         _pImmediateContext->VSSetShader(_Shader->GetFSShaderList()[0]._pVertexShader, nullptr, 0);
         _pImmediateContext->PSSetShader(_Shader->GetFSShaderList()[0]._pPixelShader, nullptr, 0);
 
+
+        _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+        _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
         _pImmediateContext->PSSetShaderResources(0, 1, &g_pRTTShaderResourceView);
 
         _pImmediateContext->Draw(4, 0);
@@ -837,7 +841,7 @@ void Application::Draw()
     DimGuiManager->DrawCamMenu(_pCamControll);
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
-    DimGuiManager->ShaderMenu(_Shader);
+    DimGuiManager->ShaderMenu(_Shader,&postSettings);
 
     DimGuiManager->EndRender();
 
@@ -904,6 +908,8 @@ void Application::Cleanup()
         _Shader = nullptr;
 
 
+     
+
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };
@@ -929,6 +935,16 @@ void Application::Cleanup()
         if( _pImmediateContext ) _pImmediateContext->Release();
     
     
+        //RTT Remove
+        if (g_pRTTRrenderTargetTexture) g_pRTTRrenderTargetTexture->Release();
+        if (g_pRTTRenderTargetView) g_pRTTRenderTargetView->Release();
+        if (_pRTTDepthStencil) _pRTTDepthStencil->Release();
+        if (g_pRTTDepthStencilView) g_pRTTDepthStencilView->Release();
+        if (g_pRTTShaderResourceView) g_pRTTShaderResourceView->Release();
+        if (g_pScreenQuadVB) g_pScreenQuadVB->Release();
+        if (m_pPointrLinear) m_pPointrLinear->Release();
+        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+
         ID3D11Debug* debugDevice = nullptr;
         _pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugDevice));
     

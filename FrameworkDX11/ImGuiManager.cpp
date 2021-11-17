@@ -86,12 +86,31 @@ void ImGuiManager::DrawCamMenu(CameraController* Cams)
 
 static const char* current_Shader = NULL;
 static string Shadername;
+
+enum PostProccessing
+{
+    Colour_Change=0,
+    HDR,
+    Bloom,
+    DepthOfField
+};
+
+enum ScreenSpaceEffects
+{
+    AmbientOcclusion=0,
+    LensFlare
+};
+
+
 static bool LoadShader = false;
-void ImGuiManager::ShaderMenu(ShaderController* Shader)
+void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings)
 {
     if (!LoadShader) {
         Shadername = Shader->GetShaderData().Name;
         current_Shader = Shadername.c_str();
+
+       
+
         LoadShader = true;
     }
 
@@ -120,6 +139,42 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader)
                 }
                 ImGui::EndCombo();
             }
+
+           
+
+        }
+        if (ImGui::CollapsingHeader("Post Processing"))
+        {
+            PostProcessingCB* currentPPCB= postSettings;
+            bool TOCUbe=false;
+            ImGui::Text("RTT");
+            ImGui::Checkbox("TO_CUBE",&TOCUbe);
+           
+            bool useColour = currentPPCB->UseColour;
+            ImGui::Checkbox("Colour Change", &useColour);
+            currentPPCB->UseColour = useColour;
+
+            float Colour[] = { currentPPCB->Color.x , currentPPCB->Color.y, currentPPCB->Color.z, currentPPCB->Color.w};
+            ImGui::ColorPicker4("Colour", Colour, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
+            currentPPCB->Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
+
+            bool useHRD = currentPPCB->UseHDR;
+            ImGui::Checkbox("HRD", &useHRD);
+            currentPPCB->UseHDR = useHRD;
+
+            bool useBloom = currentPPCB->UseBloom;
+            ImGui::Checkbox("Bloom", &useBloom);
+            currentPPCB->UseBloom = useBloom;
+
+            bool useDOF = currentPPCB->UseDepthOfF;
+            ImGui::Checkbox("DepthOfField", &useDOF);
+            currentPPCB->UseDepthOfF = useDOF;
+
+
+        }
+        if (ImGui::CollapsingHeader("Screen Space effects"))
+        {
+           
         }
     }
     ImGui::End();
@@ -166,7 +221,10 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
             ImGui::Text("Texture");
             ImGui::Checkbox("On", &booldata);
 
-
+            ImGui::Text("Parralax Options");
+            ImGui::InputFloat("Hight Scale",  &data.Material.HightScale, 0.00f, 0.0f, "%.2f");
+            ImGui::InputFloat("Max Layer", &data.Material.MaxLayers);
+            ImGui::InputFloat("Min Layer", &data.Material.MinLayers);
 
 
             data.Material.UseTexture = booldata;

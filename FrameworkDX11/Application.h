@@ -51,11 +51,11 @@ private:
 	ID3D11Buffer* _pConstantBuffer ;
 
 	ID3D11Buffer* _pLightConstantBuffer;
-
+	ID3D11Buffer* _pPostProcessingConstantBuffer;
 
 	//post processing
 	//--------------------------------------------------------
-	
+	PostProcessingCB postSettings;
 	// RTT front
 	ID3D11Texture2D* g_pRTTRrenderTargetTexture;
 	ID3D11RenderTargetView* g_pRTTRenderTargetView;

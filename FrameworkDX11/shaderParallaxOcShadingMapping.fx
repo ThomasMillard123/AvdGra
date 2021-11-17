@@ -43,6 +43,10 @@ struct _Material
 	bool    UseTexture;     // 4 bytes
 	float2  Padding;        // 8 bytes
 							//----------------------------------- (16 byte boundary)
+	float               HightScale;
+	float               MaxLayers;
+	float               MinLayers;
+	float               Padding1;
 };  // Total:               // 80 bytes ( 5 * 16 )
 
 cbuffer MaterialProperties : register(b1)
@@ -112,20 +116,16 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
-
-	float HeightScale = 0.1f;
-
 	//caluate the max of the amout of movement 
 	float ParallaxLimit = -length(toEye.xy) / toEye.z; 
-	ParallaxLimit *= HeightScale;
+	ParallaxLimit *= Material.HightScale;
 
 	float2 vOffsetDir = normalize(toEye.xy);
 	float2 vMaxOffset = vOffsetDir * ParallaxLimit;
 
-	float minLayers = 10;
-	float maxLayers = 15;
+	
 
-	float NumLayers = lerp(maxLayers, minLayers, abs(dot(toEye, Normal)));
+	float NumLayers = lerp(Material.MaxLayers, Material.MinLayers, abs(dot(toEye, Normal)));
 
 	float Step = 1.0 / NumLayers;
 
@@ -167,24 +167,20 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 }
 float ParallaxSelfShadowing(float3 toLight, float2 texCoord, float3 Normal)
 {
-	float HeightScale = 0.1f;
 	float ShadowFactor = 1;
-	float minLayers = 10;
-	float maxLayers = 15;
-
-
+	
 	float2 dx = ddx(texCoord);
 	float2 dy = ddy(texCoord);
 	float height = 1.0 - txParallax.SampleGrad(samLinear, texCoord, dx, dy).x;
 
-	float ParallaxScale = HeightScale * (1.0 - height);
+	float ParallaxScale = Material.HightScale * (1.0 - height);
 	//calulate light for suface orinated to light
 	if (dot(Normal, toLight) > 0)
 	{
 		ShadowFactor = 0;
 		float numSamplesUnderSurface = 0;
 
-		float numLayers = lerp(maxLayers, minLayers, dot(Normal, toLight));
+		float numLayers = lerp(Material.MaxLayers, Material.MinLayers, dot(Normal, toLight));
 
 		float layerHeight = height / numLayers;
 		float2 texStep = ParallaxScale * toLight.xy / numLayers;

@@ -43,6 +43,10 @@ struct _Material
 	bool    UseTexture;     // 4 bytes
 	float2  Padding;        // 8 bytes
 							//----------------------------------- (16 byte boundary)
+	float               HightScale;
+	float               MaxLayers;
+	float               MinLayers;
+	float               Padding1;
 };  // Total:               // 80 bytes ( 5 * 16 )
 
 cbuffer MaterialProperties : register(b1)
@@ -110,11 +114,11 @@ float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 
 float2 SimpleParallax(float2 texCoord, float3 toEye)
 {
-	float fHeightScale=0.1f;
+	
 	float height = txParallax.Sample(samLinear, texCoord).r;
 	//assumed that scaled height = -biased height -> h * s + b = h * s - s = s(h - 1)
 	//because in presentation it states that reasonable scale value = 0.02, and bias = [-0.01, -0.02]
-	float heightSB = fHeightScale * (height - 1.0);
+	float heightSB = Material.HightScale * (height - 1.0);
 
 	float2 parallax = toEye.xy * heightSB;
 

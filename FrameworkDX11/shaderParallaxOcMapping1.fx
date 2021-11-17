@@ -43,6 +43,10 @@ struct _Material
 	bool    UseTexture;     // 4 bytes
 	float2  Padding;        // 8 bytes
 							//----------------------------------- (16 byte boundary)
+	float               HightScale;
+	float               MaxLayers;
+	float               MinLayers;
+	float               Padding1;
 };  // Total:               // 80 bytes ( 5 * 16 )
 
 cbuffer MaterialProperties : register(b1)
@@ -111,19 +115,17 @@ float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
 
-	float HeightScale = 0.1f;
+	
 
 	//caluate the max of the amout of movement 
 	float ParallaxLimit = -length(toEye.xy) / toEye.z;
-	ParallaxLimit *= HeightScale;
+	ParallaxLimit *= Material.HightScale;
 
 	float2 vOffsetDir = normalize(toEye.xy);
 	float2 vMaxOffset = vOffsetDir * ParallaxLimit;
 
-	float minLayers = 10;
-	float maxLayers = 15;
 
-	float NumLayers = lerp(maxLayers, minLayers, abs(dot(toEye, Normal)));
+	float NumLayers = lerp(Material.MaxLayers, Material.MinLayers, abs(dot(toEye, Normal)));
 
 	float Step = 1.0 / NumLayers;
 

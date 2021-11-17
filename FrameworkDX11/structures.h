@@ -40,6 +40,12 @@ struct _Material
 	// Add some padding to complete the 16 byte boundary.
 	float               Padding[2];
 	//----------------------------------- (16 byte boundary)
+
+	float               HightScale;
+	float               MaxLayers;
+	float               MinLayers;
+	float               Padding1;
+
 }; // Total:                                80 bytes (5 * 16)
 
 struct MaterialPropertiesConstantBuffer
@@ -102,3 +108,17 @@ struct LightPropertiesConstantBuffer
 	//----------------------------------- (16 byte boundary)
 	Light               Lights[MAX_LIGHTS]; // 80 * 8 bytes
 };  // Total:                                  672 bytes (42 * 16)
+
+
+
+
+struct PostProcessingCB
+{
+	DirectX::XMFLOAT4  Color;
+	//----------
+	int UseHDR;
+	int UseBloom;
+	int UseDepthOfF;
+	int UseColour;
+	//------------
+};
