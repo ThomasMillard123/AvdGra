@@ -20,7 +20,10 @@ cbuffer ConstantBuffer : register( b0 )
 
 Texture2D txDiffuse : register(t0);
 Texture2D txNormal: register(t1);
+Texture2D txDepth[2] : register(t3);
 SamplerState samLinear : register(s0);
+SamplerComparisonState sampleStateClamp : register(s1);
+SamplerState sampleStateBorder : register(s2);
 
 #define MAX_LIGHTS 2
 // Light types.
@@ -70,6 +73,8 @@ struct Light
 	bool        Enabled;                // 4 bytes
 	int2        Padding;                // 8 bytes
 										//----------------------------------- (16 byte boundary)
+	matrix mView;
+	matrix mProjection;
 };  // Total:                           // 80 bytes (5 * 16)
 
 cbuffer LightProperties : register(b2)
@@ -99,6 +104,7 @@ struct PS_INPUT
 	float2 Tex : TEXCOORD0;
 	float3x3 TBN_inv:TBNINV;
 	float3x3 TBN:TBN;
+	float4 lightViewPosition[MAX_LIGHTS] : TEX;
 };
 
 
@@ -198,8 +204,54 @@ LightingResult DoSpotLight(Light light, float3 vertexToEye, float4 vertexPos, fl
 
 	return result;
 }
+#define PCF_RANGE 2
+float Shadow(float4 VertLightPos, int Number) {
+	float ShadowLevel = 0.0f;
+	float3 depthpos = VertLightPos.xyz / VertLightPos.w;
 
-LightingResult ComputeLighting(float4 vertexPos, float3 N)
+
+	if (depthpos.z > 1.0f || depthpos.z < 0.0f) {
+		ShadowLevel = 1.0f;
+	}
+	else {
+		//bias to make correction to depth 
+		float zBiais = depthpos.z - 0.00005f;
+		uint width, hight;
+		//PCF
+		//light number
+		if (Number == 1) {
+
+			//PCF
+			[unroll]
+			for (int x = -PCF_RANGE; x <= PCF_RANGE; x++) {
+				[unroll]
+				for (int y = -PCF_RANGE; y <= PCF_RANGE; y++) {
+					ShadowLevel += txDepth[1].Sample(sampleStateBorder, depthpos.xy, int2(x, y)).r >= zBiais ? 1.0f : 0.0f;
+				}
+			}
+		}
+		else {
+			//hardware PCF
+			[unroll]
+			for (int x = -PCF_RANGE; x <= PCF_RANGE; x++) {
+				[unroll]
+				for (int y = -PCF_RANGE; y <= PCF_RANGE; y++) {
+					ShadowLevel += txDepth[0].SampleCmpLevelZero(sampleStateClamp, depthpos.xy, depthpos.z - 0.00005f, int2(x, y));
+				}
+			}
+
+
+
+		}
+		ShadowLevel /= ((PCF_RANGE * 2 + 1) * (PCF_RANGE * 2 + 1));
+	}
+
+
+	return ShadowLevel;
+
+
+}
+LightingResult ComputeLighting(float4 vertexPos, float3 N, float4 ShadowPos[MAX_LIGHTS])
 {
 	float3 vertexToEye = (EyePosition - vertexPos).xyz;
 	
@@ -213,15 +265,22 @@ LightingResult ComputeLighting(float4 vertexPos, float3 N)
 		if (!Lights[i].Enabled) 
 			continue;
 		
-		
-		if (Lights[i].LightType == POINT_LIGHT)
-			result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
-		if (Lights[i].LightType == DIRECTIONAL_LIGHT)
-			result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N);
-		if (Lights[i].LightType == SPOT_LIGHT)
-			result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N);
-		
-		
+		float ShadowLevel = Shadow(ShadowPos[i], i);
+		if (ShadowLevel != 0.0f) {
+			if (Lights[i].LightType == POINT_LIGHT)
+				result = DoPointLight(Lights[i], vertexToEye, vertexPos, N);
+			if (Lights[i].LightType == DIRECTIONAL_LIGHT)
+				result = DoDirectionalLight(Lights[i], vertexToEye, vertexPos, N);
+			if (Lights[i].LightType == SPOT_LIGHT)
+				result = DoSpotLight(Lights[i], vertexToEye, vertexPos, N);
+			result.Diffuse *= ShadowLevel;
+			result.Specular *= ShadowLevel;
+		}
+		else {
+			//no light
+			result.Diffuse = 0;
+			result.Specular = 0;
+		}
 		totalResult.Diffuse += result.Diffuse;
 		totalResult.Specular += result.Specular;
 	}
@@ -263,6 +322,18 @@ PS_INPUT VS( VS_INPUT input )
 	output.TBN_inv = transpose(TBN);
 	output.TBN = TBN;
 
+
+	float4 LightView;
+	for (int i = 0; i < MAX_LIGHTS; ++i)
+	{
+		//Calculate the position of the vertice as viewed by the light source.
+		LightView = mul(input.Pos, World);
+		LightView = mul(LightView, Lights[i].mView);
+		LightView = mul(LightView, Lights[i].mProjection);
+		output.lightViewPosition[i] = LightView * float4(0.5f, -0.5f, 1.0f, 1.0f) + float4(0.5f, 0.5f, 0.0f, 0.0f) * LightView.w;
+	}
+
+
     return output;
 }
 
@@ -281,7 +352,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	float3 bumpedNorm = mul(bumpMap, IN.TBN);
 
 
-	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm);
+	LightingResult lit = ComputeLighting(IN.worldPos, bumpedNorm, IN.lightViewPosition);
 
 	float4 texColor = { 1, 1, 1, 1 };
 

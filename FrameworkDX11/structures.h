@@ -92,6 +92,8 @@ struct Light
 	// Add some padding to make this struct size a multiple of 16 bytes.
 	int         Padding[2];
 	//----------------------------------- (16 byte boundary)
+	XMMATRIX mView;
+	XMMATRIX mProjection;
 };  // Total:                              80 bytes ( 5 * 16 )
 
 
@@ -121,4 +123,8 @@ struct PostProcessingCB
 	int UseDepthOfF;
 	int UseColour;
 	//------------
+	int UseBlur;
+	float fadeAmount;
+	float FarPlane;
+	int pad3;
 };

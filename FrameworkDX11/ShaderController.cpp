@@ -109,6 +109,17 @@ void ShaderController::SetShaderData(UINT ShaderSet)
     CurrentShader = ShaderSet;
 }
 
+ShaderData ShaderController::GetShaderByName(string Name)
+{
+    for (auto Shader : _ShaderData) {
+        if (Shader.Name == Name) {
+            return Shader;
+        }
+    }
+    assert(false && "Shader does not exsit in list");
+    return _ShaderData[0];
+}
+
 HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
 {
 
@@ -181,6 +192,23 @@ HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileNa
     
 }
 
+ShaderData ShaderController::GetFullScreenShaderByName(string Name)
+{
+
+    for (auto FullShader : _FullScreenShaderData) {
+        if (FullShader.Name == Name) {
+            return FullShader;
+        }
+    }
+    assert(false && "Shader does not exsit in list");
+    return _FullScreenShaderData[0];
+}
+
+ShaderData ShaderController::GetFullScreenShaderByNumber(int No)
+{
+    return _FullScreenShaderData[No];
+}
+
 HRESULT ShaderController::CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
 {
     HRESULT hr = S_OK;
@@ -225,6 +253,9 @@ void ShaderController::CleanUp()
          Shader.CleanUp();
      }
 
+     for (auto Shader : _FullScreenShaderData) {
 
+         Shader.CleanUp();
+     }
 
 }

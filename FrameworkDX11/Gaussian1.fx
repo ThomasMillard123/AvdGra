@@ -13,6 +13,10 @@ cbuffer PostProcessingCB: register(b0)
     int UseDepthOfF;
     int UseColour;
     //------------
+    int UseBlur;
+    float fadeAmount;
+    int pad2;
+    int pad3;
 };
 
 struct QuadVS_Input 
@@ -66,51 +70,46 @@ float4 QuadPS(QuadVS_Output Input) : SV_TARGET
 {
     float4 vColor = tex.Sample(PointSampler, Input.Tex);
 
-      if (UseBloom == 1) {
+   
+          //pass 1
+          float weight0, weight1, weight2, weight3, weight4;
+          float normalization;
 
-        float weight0, weight1, weight2, weight3, weight4;
-        float normalization;
-        
 
-        // Create the weights that each neighbor pixel will contribute to the blur.
-        weight0 = 1.0f;
-        weight1 = 0.9f;
-        weight2 = 0.55f;
-        weight3 = 0.18f;
-        weight4 = 0.1f;
+          // Create the weights that each neighbor pixel will contribute to the blur.
+          weight0 = 1.0f;
+          weight1 = 0.9f;
+          weight2 = 0.55f;
+          weight3 = 0.18f;
+          weight4 = 0.1f;
+
+          // Create a normalized value to average the weights out a bit.
+          normalization = (weight0 + 2.0f * (weight1 + weight2 + weight3 + weight4));
+
+          // Normalize the weights.
+          weight0 = weight0 / normalization;
+          weight1 = weight1 / normalization;
+          weight2 = weight2 / normalization;
+          weight3 = weight3 / normalization;
+          weight4 = weight4 / normalization;
+
+          vColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+          // Add the nine horizontal pixels to the color by the specific weight of each.
+          vColor += tex.Sample(PointSampler, Input.texCoord1) * weight4;
+          vColor += tex.Sample(PointSampler, Input.texCoord2) * weight3;
+          vColor += tex.Sample(PointSampler, Input.texCoord3) * weight2;
+          vColor += tex.Sample(PointSampler, Input.texCoord4) * weight1;
+          vColor += tex.Sample(PointSampler, Input.texCoord5) * weight0;
+          vColor += tex.Sample(PointSampler, Input.texCoord6) * weight1;
+          vColor += tex.Sample(PointSampler, Input.texCoord7) * weight2;
+          vColor += tex.Sample(PointSampler, Input.texCoord8) * weight3;
+          vColor += tex.Sample(PointSampler, Input.texCoord9) * weight4;
+
+          //vColor.a = 1.0f;
       
+     
 
-        // Create a normalized value to average the weights out a bit.
-        normalization = (weight0 + 2.0f * (weight1 + weight2 + weight3 + weight4));
-
-        // Normalize the weights.
-        weight0 = weight0 / normalization;
-        weight1 = weight1 / normalization;
-        weight2 = weight2 / normalization;
-        weight3 = weight3 / normalization;
-        weight4 = weight4 / normalization;
-
-        vColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-        // Add the nine horizontal pixels to the color by the specific weight of each.
-        vColor += tex.Sample(PointSampler, Input.texCoord1) * weight4;
-        vColor += tex.Sample(PointSampler, Input.texCoord2) * weight3;
-        vColor += tex.Sample(PointSampler, Input.texCoord3) * weight2;
-        vColor += tex.Sample(PointSampler, Input.texCoord4) * weight1;
-        vColor += tex.Sample(PointSampler, Input.texCoord5) * weight0;
-        vColor += tex.Sample(PointSampler, Input.texCoord6) * weight1;
-        vColor += tex.Sample(PointSampler, Input.texCoord7) * weight2;
-        vColor += tex.Sample(PointSampler, Input.texCoord8) * weight3;
-        vColor += tex.Sample(PointSampler, Input.texCoord9) * weight4;
-
-        vColor.a = 1.0f;
-
-       
-
-    }
-    if (UseColour == 1) {
-        vColor = vColor * Color;
-
-    }
   
     return vColor;
 }

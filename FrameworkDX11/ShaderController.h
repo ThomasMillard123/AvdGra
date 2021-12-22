@@ -4,7 +4,7 @@
 #include <d3dcompiler.h>
 #include<vector>
 #include<string>
-
+#include<cassert>
 using namespace std;
 
 struct ShaderData
@@ -50,11 +50,12 @@ public:
 	vector<ShaderData> GetShaderList() { return _ShaderData; }
 	ShaderData GetShaderData();
 	void SetShaderData(UINT ShaderSet);
-
+	ShaderData GetShaderByName(string Name);
 
 	HRESULT NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
 	vector<ShaderData> GetFSShaderList() { return _FullScreenShaderData; }
-	
+	ShaderData GetFullScreenShaderByName(string Name);
+	ShaderData GetFullScreenShaderByNumber(int No);
 
 private:
 

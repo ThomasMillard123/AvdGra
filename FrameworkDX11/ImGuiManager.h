@@ -26,7 +26,7 @@ public:
 
 	//menus
 	void DrawCamMenu(CameraController* Cams);
-	void ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings);
+	void ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings,bool &rtt);
 	void ObjectControl(DrawableGameObject* GameObject);
 	void LightControl(LightControll* LightControl);
 

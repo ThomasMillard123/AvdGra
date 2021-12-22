@@ -52,6 +52,13 @@ void Camera::Update()
 	
 }
 
+void Camera::UpdatePointat()
+{
+	
+	XMStoreFloat4x4(&_view, XMMatrixLookAtLH(XMLoadFloat3(&_eye), XMLoadFloat3(&_at), XMLoadFloat3(&_up)));
+	XMStoreFloat4x4(&_projection, XMMatrixPerspectiveFovLH( XM_PI/2, 1.0f, _nearDepth, _farDepth));
+}
+
 void Camera::Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth)
 {
 	_windowWidth = windowWidth;
@@ -70,6 +77,16 @@ void Camera::AgustPos(XMFLOAT3 position)
 	_eye.x += position.x;
 	_eye.y += position.y;
 	_eye.z += position.z;
+}
+
+void Camera::SetRot(XMFLOAT3 rot)
+{
+	_Rot = rot;
+	if (_Rot.x >= XMConvertToRadians(90.0f))
+		_Rot.x = XMConvertToRadians(90.0f);
+
+	if (_Rot.x <= XMConvertToRadians(-90.0f))
+		_Rot.x = XMConvertToRadians(-90.0f);
 }
 
 void Camera::AgustRot(XMFLOAT3 rot)

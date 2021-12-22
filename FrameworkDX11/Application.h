@@ -24,6 +24,8 @@
 
 #include"ShaderController.h"
 #include"LightControll.h"
+#include"ShadowMap.h"
+#include"RenderTargetTextureClass.h"
 using namespace std;
 
 class Application
@@ -56,17 +58,7 @@ private:
 	//post processing
 	//--------------------------------------------------------
 	PostProcessingCB postSettings;
-	// RTT front
-	ID3D11Texture2D* g_pRTTRrenderTargetTexture;
-	ID3D11RenderTargetView* g_pRTTRenderTargetView;
-
-	//RTT Depth
-	ID3D11Texture2D* _pRTTDepthStencil = nullptr;
-	ID3D11DepthStencilView* g_pRTTDepthStencilView;
-
-	// shader resource view for the texture
-	ID3D11ShaderResourceView* g_pRTTShaderResourceView;
-
+	
 	bool isRTT = false;
 
 
@@ -80,6 +72,20 @@ private:
 	ID3D11Buffer* g_pScreenQuadVB = nullptr;
 	
 	ID3D11SamplerState* m_pPointrLinear;
+	ID3D11SamplerState* m_pPointrClamp;
+
+	RenderTargetTextureClass* RTT;
+	RenderTargetTextureClass* Depth;
+	ShadowMap* DepthLight;
+	ShadowMap* DepthLight2;
+
+	RenderTargetTextureClass* Fade;
+	RenderTargetTextureClass* DepthOfField;
+	RenderTargetTextureClass* DownSample;
+	RenderTargetTextureClass* post1;
+	RenderTargetTextureClass* post2;
+	RenderTargetTextureClass* UpSample;
+	RenderTargetTextureClass* alpha;
 	//------------------------------------------------------
 
 
@@ -91,7 +97,7 @@ private:
 	int	_viewHeight;
 
 	DrawableGameObject		_GameObject;
-
+	DrawableGameObject		_GameObjectFloor;
 
 	InputControllor* _controll;
 	ShaderController* _Shader;
@@ -101,6 +107,8 @@ private:
 
 	Camera* _Camrea;
 
+
+	
 
 public:
 	Application();

@@ -103,7 +103,7 @@ enum ScreenSpaceEffects
 
 
 static bool LoadShader = false;
-void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings)
+void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings, bool& rtt)
 {
     if (!LoadShader) {
         Shadername = Shader->GetShaderData().Name;
@@ -146,9 +146,6 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
         if (ImGui::CollapsingHeader("Post Processing"))
         {
             PostProcessingCB* currentPPCB= postSettings;
-            bool TOCUbe=false;
-            ImGui::Text("RTT");
-            ImGui::Checkbox("TO_CUBE",&TOCUbe);
            
             bool useColour = currentPPCB->UseColour;
             ImGui::Checkbox("Colour Change", &useColour);
@@ -159,7 +156,7 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
             currentPPCB->Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
 
             bool useHRD = currentPPCB->UseHDR;
-            ImGui::Checkbox("HRD", &useHRD);
+            ImGui::Checkbox("HDR", &useHRD);
             currentPPCB->UseHDR = useHRD;
 
             bool useBloom = currentPPCB->UseBloom;
@@ -170,7 +167,20 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
             ImGui::Checkbox("DepthOfField", &useDOF);
             currentPPCB->UseDepthOfF = useDOF;
 
+            ImGui::InputFloat("DOF Far", &currentPPCB->FarPlane);
+            if (currentPPCB->FarPlane < 0) {
+                currentPPCB->FarPlane = 0;
+            }
+            bool useblue= currentPPCB->UseBlur;
+            ImGui::Checkbox("Blur", &useblue);
+            currentPPCB->UseBlur = useblue;
 
+           
+            ImGui::Checkbox("RTT", &rtt);
+
+            ImGui::SliderFloat("FadeLevel", &currentPPCB->fadeAmount, 0.0f, 1.0f,"%.3f");
+
+            
         }
         if (ImGui::CollapsingHeader("Screen Space effects"))
         {
@@ -320,7 +330,14 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             ImGui::ColorPicker4("Colour", Colour,ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB);
             CurrLightData.Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
 
-         
+            ImGui::Text("Shdows Direction");
+
+            XMFLOAT3 LightDirection = LightControl->GetLight(current_item1)->CamLight->GetRot();
+
+           ImGui::SliderAngle("Pitch", &LightDirection.x, 0.995f * -90.0f, 0.995f * 90.0f);
+           ImGui::SliderAngle("Yaw", &LightDirection.y, -180.0f, 180.0f);
+
+            LightControl->GetLight(current_item1)->CamLight->SetRot(LightDirection);
 
             switch (LightControl->GetLight(name1)->GetLightData().LightType)
             {
