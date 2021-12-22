@@ -20,7 +20,7 @@ public:
 	~Camera();
 
 	void Update();
-
+	void UpdatePointat();
 	XMFLOAT4X4 GetView() const { return _view; }
 	XMFLOAT4X4 GetProjection() const { return _projection; }
 	XMFLOAT4X4 GetViewProjection() const;
@@ -43,6 +43,8 @@ public:
 	void SetLookAt(XMFLOAT3 lookAt) { _at = lookAt; }
 	void SetUp(XMFLOAT3 up) { _up = up; }
 
+	XMFLOAT3 GetRot() { return _Rot; }
+	void SetRot(XMFLOAT3 rot);
 	void AgustRot(XMFLOAT3 rot);
 	void Reshape(FLOAT windowWidth, FLOAT windowHeight, FLOAT nearDepth, FLOAT farDepth);
 	

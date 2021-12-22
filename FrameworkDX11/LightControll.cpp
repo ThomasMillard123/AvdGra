@@ -33,8 +33,7 @@ void LightControll::AddLight(string Name, bool Enabled, LightType _LightType, XM
 
 void LightControll::AddLight(string Name, bool Enabled, LightType _LightType, XMFLOAT4 Pos, XMFLOAT4 Colour, float Angle, float ConstantAttenuation, float LinearAttenuation, float QuadraticAttenuation, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext)
 {
-    Light_Data* LightDat = new Light_Data(Name, Enabled, _LightType, Pos, Colour, Angle, ConstantAttenuation, LinearAttenuation, QuadraticAttenuation);
-    LightDat->GetLightObject()->GetAppearance()->initMesh(pd3dDevice, pContext);
+    Light_Data* LightDat = new Light_Data(Name, Enabled, _LightType, Pos, Colour, Angle, ConstantAttenuation, LinearAttenuation, QuadraticAttenuation, pd3dDevice, pContext);
     _pLightData.push_back(LightDat);
 }
 

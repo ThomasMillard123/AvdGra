@@ -79,6 +79,9 @@
     <ClCompile Include="..\imgui-master\misc\cpp\imgui_stdlib.cpp">
       <Filter>DImGUI</Filter>
     </ClCompile>
+    <ClCompile Include="RenderTargetTextureClass.cpp" />
+    <ClCompile Include="RenderTargetControll.cpp" />
+    <ClCompile Include="ShadowMap.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -165,6 +168,9 @@
     <ClInclude Include="..\imgui-master\misc\cpp\imgui_stdlib.h">
       <Filter>DImGUI</Filter>
     </ClInclude>
+    <ClInclude Include="RenderTargetTextureClass.h" />
+    <ClInclude Include="RenderTargetControll.h" />
+    <ClInclude Include="ShadowMap.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TextureLoading">
@@ -242,6 +248,33 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaderParallaxOcShadingMapping1.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Gaussian1.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Finalpass.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="BloomAlphaTex.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Gaussian2.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="SolidColour.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Fade.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="DepthOfField.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Depth.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="DepthLight.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

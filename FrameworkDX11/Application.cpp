@@ -210,10 +210,11 @@ HRESULT Application::InitWindow(HINSTANCE hInstance, int nCmdShow)
 
 HRESULT Application::InitMesh()
 {
+    HRESULT hr;
     //create shaders
     _Shader = new ShaderController();
     //TBN_VS= conversons to tangent space is done in vertex shader and without converts Parallax to world space
-    HRESULT hr = _Shader->NewShader("NoEffects", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
+     hr = _Shader->NewShader("NoEffects", L"shaderNoNormalMap.fx", _pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
     
@@ -251,10 +252,52 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+    hr = _Shader->NewShader("Depth(NotFullShader)", L"Depth.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewShader("DepthLight(NotFullShader)", L"DepthLight.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    //quadShader
+    hr = _Shader->NewFullScreenShader("SolidColour", L"SolidColour.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewFullScreenShader("Gaussian1", L"Gaussian1.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewFullScreenShader("Fianl", L"Finalpass.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    hr = _Shader->NewFullScreenShader("Alpha", L"BloomAlphaTex.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+    hr = _Shader->NewFullScreenShader("Gaussian2", L"Gaussian2.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewFullScreenShader("Fade", L"Fade.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+    hr = _Shader->NewFullScreenShader("DepthOfField", L"DepthOfField.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+
+
     //create object mesh
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
         return hr;
+
+    hr = _GameObjectFloor.GetAppearance()->initMeshFloor(_pd3dDevice, _pImmediateContext, 10,10);
+    if (FAILED(hr))
+        return hr;
+    _GameObjectFloor.GetTransfrom()->SetPosition(-5, -2, 5);
 
 
     // Create the constant buffer
@@ -286,6 +329,14 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+    // Create the PostProcessing constant buffer
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(PostProcessingCB);
+    bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    bd.CPUAccessFlags = 0;
+    hr = _pd3dDevice->CreateBuffer(&bd, nullptr, &_pPostProcessingConstantBuffer);
+    if (FAILED(hr))
+        return hr;
 
     return hr;
 }
@@ -302,6 +353,43 @@ HRESULT Application::InitWorld(int width, int height)
     _pCamControll->AddCam(_Camrea);
 
     _controll->AddCam(_pCamControll);
+
+    //postSettings
+    postSettings.UseColour = false;
+    postSettings.Color = XMFLOAT4{ 1.0f,1.0f,1.0f,0.0f };
+    postSettings.UseBloom = false;
+    postSettings.UseDepthOfF = false;
+    postSettings.UseHDR = false;
+    postSettings.UseBlur = false;
+    postSettings.fadeAmount = 1.0f;
+    postSettings.FarPlane = 10.0f;
+    SCREEN_VERTEX svQuad[4];
+
+    svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
+    svQuad[0].tex = XMFLOAT2(0.0f, 0.0f);
+
+    svQuad[1].pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+    svQuad[1].tex = XMFLOAT2(1.0f, 0.0f);
+
+    svQuad[2].pos = XMFLOAT3(-1.0f, -1.0f, 0.0f);
+    svQuad[2].tex = XMFLOAT2(0.0f, 1.0f);
+
+    svQuad[3].pos = XMFLOAT3(1.0f, -1.0f, 0.0f);
+    svQuad[3].tex = XMFLOAT2(1.0f, 1.0f);
+
+
+    D3D11_BUFFER_DESC bd = {};
+    bd.Usage = D3D11_USAGE_DEFAULT;
+    bd.ByteWidth = sizeof(SCREEN_VERTEX) * 4;
+    bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    bd.CPUAccessFlags = 0;
+
+    D3D11_SUBRESOURCE_DATA InitData = {};
+    InitData.pSysMem = svQuad;
+    HRESULT hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &g_pScreenQuadVB);
+    if (FAILED(hr))
+        return hr;
+
 
     return S_OK;
 }
@@ -445,7 +533,7 @@ HRESULT Application::InitDevice()
         sd.BufferCount = 1;
         sd.BufferDesc.Width = width;
         sd.BufferDesc.Height = height;
-        sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        sd.BufferDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
         sd.BufferDesc.RefreshRate.Numerator = 60;
         sd.BufferDesc.RefreshRate.Denominator = 1;
         sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -502,17 +590,46 @@ HRESULT Application::InitDevice()
     if (FAILED(hr))
         return hr;
 
-    _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
 
-    // Setup the viewport
-    D3D11_VIEWPORT vp;
-    vp.Width = (FLOAT)width;
-    vp.Height = (FLOAT)height;
-    vp.MinDepth = 0.0f;
-    vp.MaxDepth = 1.0f;
-    vp.TopLeftX = 0;
-    vp.TopLeftY = 0;
-    _pImmediateContext->RSSetViewports(1, &vp);
+
+
+    D3D11_SAMPLER_DESC sampDesc;
+    ZeroMemory(&sampDesc, sizeof(sampDesc));
+    sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+    sampDesc.MinLOD = 0;
+    sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+    hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pPointrLinear);
+    if (FAILED(hr))
+        return hr;
+
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+    sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    sampDesc.BorderColor[0] = 1.0f;
+    sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pPointrClamp);
+    if (FAILED(hr))
+        return hr;
+    // Create a render target view 2nd
+
+
+    RTT = new RenderTargetTextureClass(_pd3dDevice, width, height);
+    Depth = new RenderTargetTextureClass(_pd3dDevice, width, height);
+    DepthLight= new ShadowMap(_pd3dDevice, width, height);
+  
+    DepthOfField= new RenderTargetTextureClass(_pd3dDevice, width, height);
+    Fade = new RenderTargetTextureClass(_pd3dDevice, width, height);;
+    DownSample= new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
+    post1 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
+    post2 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
+    UpSample= new RenderTargetTextureClass(_pd3dDevice, width, height);
+    alpha= new RenderTargetTextureClass(_pd3dDevice, width, height);
+
 
     hr = InitMesh();
     if (FAILED(hr))
@@ -533,8 +650,9 @@ HRESULT Application::InitDevice()
    
 
     //creat Lights
-    _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -10.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+    _pLightContol->AddLight("MainPoint", true, LightType::PointLight, XMFLOAT4(0.0f, 0.0f, -4.0f,0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(45.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
     _pLightContol->AddLight("Point", true, LightType::SpotLight, XMFLOAT4(0.0f, 5.0f, 0.0f, 0.0f), XMFLOAT4(Colors::White), XMConvertToRadians(10.0f), 1.0f, 0.0f, 0.0f, _pd3dDevice, _pImmediateContext);
+
     return S_OK;
 }
 void Application::Update()
@@ -547,37 +665,77 @@ void Application::Update()
     _pCamControll->Update();
     // Update the cube transform, material etc. 
     _GameObject.update(t, _pImmediateContext);
+    _GameObjectFloor.update(t, _pImmediateContext);
     _pLightContol->update(t, _pImmediateContext);
 }
 
 void Application::Draw()
 {
+    ID3D11ShaderResourceView* a;
+    ID3D11ShaderResourceView* b;
+    // Setup the viewport
+    D3D11_VIEWPORT vp;
+    vp.Width = (FLOAT)_viewWidth;
+    vp.Height = (FLOAT)	_viewHeight;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    _pImmediateContext->RSSetViewports(1, &vp);
    
 
-    // Clear the back buffer
-    _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::MidnightBlue);
-
-    // Clear the depth buffer to 1.0 (max depth)
-    _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
+    XMFLOAT4X4 WorldAsFloat;
+    XMFLOAT4X4 projectionAsFloats;
+    XMFLOAT4X4 viewAsFloats;
     
 
+    XMMATRIX mGO;
+    XMMATRIX RTTview;
+    XMMATRIX RTTprojection;
+
+ ConstantBuffer cb1;
+
+
+    vector<DrawableGameObject*> GameObjects;
+    GameObjects.push_back(&_GameObject);
+    GameObjects.push_back(&_GameObjectFloor);
+    //Shadows
+    for (UINT i = 0; i < MAX_LIGHTS; i++)
+    {
+        _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
+        // Set primitive topology
+        _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        _pImmediateContext->VSSetShader(_Shader->GetShaderList()[10]._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderList()[10]._pPixelShader, nullptr, 0);
+
+        _pLightContol->GetLight(i)->CreateShdowMap(_pImmediateContext, GameObjects, &_pConstantBuffer);
+
+
+    }
+
+
+    //render 3d objects
+    
+    RTT->SetRenderTarget(_pImmediateContext);
+    _pImmediateContext->PSSetSamplers(1, 1, &m_pPointrClamp);
+    _pImmediateContext->PSSetSamplers(2, 1, &m_pPointrClamp);
+
     // get the game object world transform
-    XMFLOAT4X4 WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
-    XMMATRIX mGO = XMLoadFloat4x4(&WorldAsFloat);
+     WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
+     mGO = XMLoadFloat4x4(&WorldAsFloat);
 
+     viewAsFloats = _pCamControll->GetCurentCam()->GetView();
+     projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
 
-    XMFLOAT4X4 viewAsFloats = _pCamControll->GetCurentCam()->GetView();
-    XMFLOAT4X4 projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
-
-    XMMATRIX view = XMLoadFloat4x4(&viewAsFloats);
-    XMMATRIX projection = XMLoadFloat4x4(&projectionAsFloats);
+     RTTview = XMLoadFloat4x4(&viewAsFloats);
+     RTTprojection = XMLoadFloat4x4(&projectionAsFloats);
 
     // store this and the view / projection in a constant buffer for the vertex shader to use
-    ConstantBuffer cb1;
+    //ConstantBuffer cb1;
     cb1.mWorld = XMMatrixTranspose(mGO);
-    cb1.mView = XMMatrixTranspose(view);
-    cb1.mProjection = XMMatrixTranspose(projection);
+    cb1.mView = XMMatrixTranspose(RTTview);
+    cb1.mProjection = XMMatrixTranspose(RTTprojection);
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
     _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
@@ -585,27 +743,419 @@ void Application::Draw()
     setupLightForRender();
 
     // Render the cube
+
+    _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
+    
+    // Set primitive topology
+    _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
     _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
-
     _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
     _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
 
 
-    ID3D11Buffer* materialCB = _GameObject.GetAppearance()->getMaterialConstantBuffer();
-    _pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
+    ID3D11ShaderResourceView* ShadowMaps [2];
+    ShadowMaps[0]=_pLightContol->GetLight(0)->GetShadow()->DepthMapSRV();
+    ShadowMaps[1] = _pLightContol->GetLight(1)->GetShadow()->DepthMapSRV();
 
+  
+    _pImmediateContext->PSSetShaderResources(3, 2, ShadowMaps);
+
+   
+    //setTextures to buffer
+    _GameObject.GetAppearance()->SetTextures(_pImmediateContext);
     _GameObject.draw(_pImmediateContext);
 
-    _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
+    _pImmediateContext->VSSetShader(_Shader->GetShaderByName("NoEffects")._pVertexShader, nullptr, 0);
+    _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+    _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+    _pImmediateContext->PSSetShader(_Shader->GetShaderByName("NoEffects")._pPixelShader, nullptr, 0);
+    _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+
+     WorldAsFloat = _GameObjectFloor.GetTransfrom()->GetWorldMatrix();
+     mGO = XMLoadFloat4x4(&WorldAsFloat);
+     cb1.mWorld = XMMatrixTranspose(mGO);
+     _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+
+    _GameObjectFloor.GetAppearance()->SetTextures(_pImmediateContext);
+    _GameObjectFloor.draw(_pImmediateContext);
+
+
+    //post 2d 
+    if (isRTT) {
+        //RTT to cube or screen like a tv
+        // Setup the viewport
+        D3D11_VIEWPORT vp2;
+        vp2.Width = (FLOAT)_viewWidth;
+        vp2.Height = (FLOAT)_viewHeight;
+        vp2.MinDepth = 0.0f;
+        vp2.MaxDepth = 1.0f;
+        vp2.TopLeftX = 0;
+        vp2.TopLeftY = 0;
+        _pImmediateContext->RSSetViewports(1, &vp2);
+
+        _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
+        // Clear the back buffer
+        _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::LightBlue);
+        // Clear the depth buffer to 1.0 (max depth)
+        _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+
+
+        // get the game object world transform
+        WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
+        mGO = XMLoadFloat4x4(&WorldAsFloat);
+
+        viewAsFloats = _pCamControll->GetCurentCam()->GetView();
+        projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
+
+        RTTview = XMLoadFloat4x4(&viewAsFloats);
+        RTTprojection = XMLoadFloat4x4(&projectionAsFloats);
+
+        // store this and the view / projection in a constant buffer for the vertex shader to use
+        //ConstantBuffer cb1;
+        cb1.mWorld = XMMatrixTranspose(mGO);
+        cb1.mView = XMMatrixTranspose(RTTview);
+        cb1.mProjection = XMMatrixTranspose(RTTprojection);
+        cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
+        _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+
+        // Render the cube
+        _pImmediateContext->VSSetShader(_Shader->GetShaderData()._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderData()._pPixelShader, nullptr, 0);
+        _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+
+        //_pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
+
+        //setTextures to buffer
+        a = RTT->GetTexture();
+        _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+
+
+        
+
+        _GameObject.draw(_pImmediateContext);
+        
+        //lights
+
+        _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
+    }
+    else
+    {
+        _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
+
+
+
+        //deapth find
+//----------------------------------------------------------------------------------------------------------------------------
+
+
+
+        //render 3d objects
+        Depth->SetRenderTarget(_pImmediateContext);
+       
+     
+
+        // get the game object world transform
+        XMFLOAT4X4 WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
+        XMMATRIX mGO = XMLoadFloat4x4(&WorldAsFloat);
+
+        XMFLOAT4X4 viewAsFloats = _pCamControll->GetCurentCam()->GetView();
+        XMFLOAT4X4 projectionAsFloats = _pCamControll->GetCurentCam()->GetProjection();
+
+        XMMATRIX RTTview = XMLoadFloat4x4(&viewAsFloats);
+        XMMATRIX RTTprojection = XMLoadFloat4x4(&projectionAsFloats);
+
+        // store this and the view / projection in a constant buffer for the vertex shader to use
+        ConstantBuffer cb1;
+        cb1.mWorld = XMMatrixTranspose(mGO);
+        cb1.mView = XMMatrixTranspose(RTTview);
+        cb1.mProjection = XMMatrixTranspose(RTTprojection);
+        cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
+        _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+
+
+       
+
+        // Render the cube
+        _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
+        // Set primitive topology
+        _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+        _pImmediateContext->VSSetShader(_Shader->GetShaderList()[9]._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderList()[9]._pPixelShader, nullptr, 0);
+
+        _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+        _pImmediateContext->PSSetConstantBuffers(1, 1, &_pPostProcessingConstantBuffer);
+
+
+
+        //setTextures to buffer
+        _GameObject.draw(_pImmediateContext);
+
+        WorldAsFloat = _GameObjectFloor.GetTransfrom()->GetWorldMatrix();
+        mGO = XMLoadFloat4x4(&WorldAsFloat);
+        cb1.mWorld = XMMatrixTranspose(mGO);
+        _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
+
+        _GameObjectFloor.draw(_pImmediateContext);
+
+
+        _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
+
+
+
+//----------------------------------------------------------------------------------------------------
+
+
+
+
+        // Setup the viewport
+        D3D11_VIEWPORT vp2;
+        vp2.Width = (FLOAT)_viewWidth;
+        vp2.Height = (FLOAT)_viewHeight;
+        vp2.MinDepth = 0.0f;
+        vp2.MaxDepth = 1.0f;
+        vp2.TopLeftX = 0;
+        vp2.TopLeftY = 0;
+        _pImmediateContext->RSSetViewports(1, &vp2);
+
+        
+        //first pass
+
+        UINT strides = sizeof(SCREEN_VERTEX);
+        UINT offsets = 0;
+        ID3D11Buffer* pBuffers[1] = { g_pScreenQuadVB };
+
+        if (&postSettings.UseBloom) {
+            //bloom
+            alpha->SetRenderTarget(_pImmediateContext);
+
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Alpha")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("Alpha")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("Alpha")._pPixelShader, nullptr, 0);
+
+
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+            a = RTT->GetTexture();
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+            _pImmediateContext->Draw(4, 0);
+
+        }
+        
+        
+        if (postSettings.UseBlur || postSettings.UseBloom || postSettings.UseDepthOfF) {
+            // Setup the viewport
+            D3D11_VIEWPORT vp2;
+            vp2.Width = (FLOAT)_viewWidth / 2;
+            vp2.Height = (FLOAT)_viewHeight / 2;
+            vp2.MinDepth = 0.0f;
+            vp2.MaxDepth = 1.0f;
+            vp2.TopLeftX = 0;
+            vp2.TopLeftY = 0;
+            _pImmediateContext->RSSetViewports(1, &vp2);
+
+           //down sample
+            DownSample->SetRenderTarget(_pImmediateContext);
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("SolidColour")._pPixelShader, nullptr, 0);
+
+
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+            if (postSettings.UseBloom) {
+                a = alpha->GetTexture();
+            }
+            else
+            {
+                a = RTT->GetTexture();
+            }
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+            _pImmediateContext->Draw(4, 0);
+
+            //blend 1
+            post1->SetRenderTarget(_pImmediateContext);
+
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian1")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("Gaussian1")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("Gaussian1")._pPixelShader, nullptr, 0);
+
+
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+             a = DownSample->GetTexture();
+
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+            _pImmediateContext->Draw(4, 0);
+
+            //blend2
+            post2->SetRenderTarget(_pImmediateContext);
+
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian2")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("Gaussian2")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("Gaussian2")._pPixelShader, nullptr, 0);
+
+
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+            a = post1->GetTexture();
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+            _pImmediateContext->Draw(4, 0);
+
+            // Setup the viewport
+            D3D11_VIEWPORT vp3;
+            vp3.Width = (FLOAT)_viewWidth;
+            vp3.Height = (FLOAT)_viewHeight;
+            vp3.MinDepth = 0.0f;
+            vp3.MaxDepth = 1.0f;
+            vp3.TopLeftX = 0;
+            vp3.TopLeftY = 0;
+            _pImmediateContext->RSSetViewports(1, &vp);
+
+            //upsample
+            UpSample->SetRenderTarget(_pImmediateContext);
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("SolidColour")._pPixelShader, nullptr, 0);
+
+
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+            
+                a = post2->GetTexture();
+            
+            
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+
+            _pImmediateContext->Draw(4, 0);
+        }
+
+
+       
+        ID3D11ShaderResourceView* c;
+
+        if (postSettings.UseDepthOfF) {
+            //DOF implmentation
+            DepthOfField->SetRenderTarget(_pImmediateContext);
+            _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("DepthOfField")._pVertexLayout);
+            _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+            _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+            _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("DepthOfField")._pVertexShader, nullptr, 0);
+            _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("DepthOfField")._pPixelShader, nullptr, 0);
+            _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+            _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+            a = RTT->GetTexture();
+            b = UpSample->GetTexture();
+            c = Depth->GetTexture();
+
+            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            _pImmediateContext->PSSetShaderResources(1, 1, &b);
+            _pImmediateContext->PSSetShaderResources(2, 1, &c);
+            _pImmediateContext->Draw(4, 0);
+
+        }
+
+
+
+        //fade implmentation
+        Fade->SetRenderTarget(_pImmediateContext);
+        _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Fade")._pVertexLayout);
+        _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+        _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+        _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("Fade")._pVertexShader, nullptr, 0);
+        _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("Fade")._pPixelShader, nullptr, 0);
+        _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+        _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+
+        if (postSettings.UseBlur) {
+            a = UpSample->GetTexture();
+        }
+        else if (postSettings.UseDepthOfF) {
+            a = DepthOfField->GetTexture();
+        }
+        else {
+            a = RTT->GetTexture();
+        }
+        _pImmediateContext->PSSetShaderResources(0, 1, &a);
+        _pImmediateContext->Draw(4, 0);
+
+
+        //final post processing 
+        _pImmediateContext->OMSetRenderTargets(1, &_pRenderTargetView, _pDepthStencilView);
+        _pImmediateContext->ClearRenderTargetView(_pRenderTargetView, Colors::DarkBlue);
+        _pImmediateContext->ClearDepthStencilView(_pDepthStencilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+        _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Fianl")._pVertexLayout);
+        _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
+        _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
+        _pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+        _pImmediateContext->VSSetShader(_Shader->GetFullScreenShaderByName("Fianl")._pVertexShader, nullptr, 0);
+        _pImmediateContext->PSSetShader(_Shader->GetFullScreenShaderByName("Fianl")._pPixelShader, nullptr, 0);
+      
+    
+       
+        a = Fade->GetTexture();
+        b = UpSample->GetTexture();
+        
+
+
+       
+        _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
+        _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
+        _pImmediateContext->PSSetShaderResources(0, 1, &a);
+        _pImmediateContext->PSSetShaderResources(1, 1, &b);
+        _pImmediateContext->Draw(4, 0);
+    }
+
+   
 
     DimGuiManager->BeginRender();
     DimGuiManager->DrawCamMenu(_pCamControll);
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
-    DimGuiManager->ShaderMenu(_Shader);
+    DimGuiManager->ShaderMenu(_Shader,&postSettings,isRTT);
 
     DimGuiManager->EndRender();
 
@@ -672,6 +1222,8 @@ void Application::Cleanup()
         _Shader = nullptr;
 
 
+     
+
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };
@@ -697,6 +1249,12 @@ void Application::Cleanup()
         if( _pImmediateContext ) _pImmediateContext->Release();
     
     
+        //RTT Remove
+        
+        if (g_pScreenQuadVB) g_pScreenQuadVB->Release();
+        if (m_pPointrLinear) m_pPointrLinear->Release();
+        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+
         ID3D11Debug* debugDevice = nullptr;
         _pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugDevice));
     
@@ -716,3 +1274,9 @@ bool Application::InputControll(MSG msg)
     
     return false;
 }
+
+
+//TODO: add shdow mapping
+//TODO: Deffered rendring
+//TODO: Gemoratry shader
+

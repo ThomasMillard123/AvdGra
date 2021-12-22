@@ -26,13 +26,25 @@ void Appearance::Update(ID3D11DeviceContext* pContext)
 
 void Appearance::Draw(ID3D11DeviceContext* pImmediateContext)
 {
-	
+	ID3D11Buffer* materialCB = getMaterialConstantBuffer();
+	pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
+
+	// Set vertex buffer
+	UINT stride = sizeof(SimpleVertex);
+	UINT offset = 0;
+
+	pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+	pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
+
+	pImmediateContext->DrawIndexed(NumberOfVert, 0, 0);
+}
+
+void Appearance::SetTextures(ID3D11DeviceContext* pImmediateContext)
+{
 	pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureResourceView);
 	pImmediateContext->PSSetShaderResources(1, 1, &m_pNormalMapResourceView);
 	pImmediateContext->PSSetShaderResources(2, 1, &m_pParralaxMapResourceView);
-	pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
-
-	pImmediateContext->DrawIndexed(NUM_VERTICES, 0, 0);
 }
 
 void Appearance::CleanUp()
@@ -234,7 +246,7 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 
 	// Set primitive topology
 	pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	NumberOfVert = NUM_VERTICES;
 	// load and setup textures
 	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_TEX.dds", nullptr, &m_pTextureResourceView);
 	if (FAILED(hr))
@@ -265,6 +277,147 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	m_material.Material.UseTexture = true;
 	m_material.Material.Emissive= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 	m_material.Material.Ambient= XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_material.Material.HightScale = 0.1f;
+	m_material.Material.MaxLayers = 15.0f;
+	m_material.Material.MinLayers = 10.0f;
+	// Create the material constant buffer
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(MaterialPropertiesConstantBuffer);
+	bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bd.CPUAccessFlags = 0;
+	hr = pd3dDevice->CreateBuffer(&bd, nullptr, &m_pMaterialConstantBuffer);
+	if (FAILED(hr))
+		return hr;
+
+	return hr;
+}
+
+HRESULT Appearance::initMeshFloor(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext, UINT Width,UINT Hight)
+{
+
+
+	//creat  plane with hight data
+	int cols = 2;
+	int rows = 2;
+	int NumVertices = rows * cols;
+	int NumFaces = (rows - 1) * (cols - 1) * 2;
+	float width = 10;
+	float hight = 10;
+	//vertex
+	std::vector<SimpleVertex>v;
+
+	float dx = width / (cols - 1);
+	float dz = hight / (rows - 1);
+	float textCordY = 1.0f;
+	float textCordX = 0.0f;
+	float increasX = 1.0f / cols;
+	float increasZ = 1.0f / rows;
+	//creat vertex data
+	for (UINT i = 0; i < rows; i++)
+	{
+		for (UINT j = 0; j < cols; j++)
+		{
+			v.push_back({ XMFLOAT3{ (float)(-0 * width + j * dx),0, (float)(0 * hight - i * dz) },XMFLOAT3(0.0f, 1.0f, 0.0f),XMFLOAT2(textCordX,textCordY), XMFLOAT3(0.0f,0.0f,0.0f),XMFLOAT3(0.0f,0.0f,0.0f) });
+			textCordX += increasX;
+		}
+		textCordY -= increasZ;
+		textCordX = 0;
+	}
+
+
+	//CalculateModelVectors(&v[0], v.size());
+
+	//indices creation
+
+	std::vector<WORD>indices;
+	for (UINT i = 0; i < rows - 1; i++)
+	{
+		for (UINT j = 0; j < cols - 1; j++)
+		{
+
+			indices.push_back(i * cols + j);
+
+			indices.push_back(i * cols + (j + 1));
+
+			indices.push_back((i + 1) * cols + j);
+
+
+			indices.push_back((i + 1) * cols + j);
+
+			indices.push_back(i * cols + (j + 1));
+
+			indices.push_back((i + 1) * cols + (j + 1));
+
+
+
+		}
+
+
+	}
+
+
+	//buffer creation
+	D3D11_BUFFER_DESC bd;
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(SimpleVertex) * v.size();
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = &v[0];
+
+	//store vertex data in buffer
+	HRESULT hr= pd3dDevice->CreateBuffer(&bd, &InitData, &m_pVertexBuffer);
+
+	ZeroMemory(&bd, sizeof(bd));
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(WORD) * indices.size();
+	bd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	ZeroMemory(&InitData, sizeof(InitData));
+	InitData.pSysMem = &indices[0];
+	//creat buffer
+	 hr = pd3dDevice->CreateBuffer(&bd, &InitData, &m_pIndexBuffer);
+
+
+	NumberOfVert = indices.size();
+
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_TEX.dds", nullptr, &m_pTextureResourceView);
+	if (FAILED(hr))
+		return hr;
+
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_NORM.dds", nullptr, &m_pNormalMapResourceView);
+	if (FAILED(hr))
+		return hr;
+
+	hr = CreateDDSTextureFromFile(pd3dDevice, L"Resources\\bricks_DISP.dds", nullptr, &m_pParralaxMapResourceView);
+	if (FAILED(hr))
+		return hr;
+
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	hr = pd3dDevice->CreateSamplerState(&sampDesc, &m_pSamplerLinear);
+
+	m_material.Material.Diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	m_material.Material.Specular = XMFLOAT4(1.0f, 0.2f, 0.2f, 1.0f);
+	m_material.Material.SpecularPower = 32.0f;
+	m_material.Material.UseTexture = true;
+	m_material.Material.Emissive = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
+	m_material.Material.Ambient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_material.Material.HightScale = 0.1f;
+	m_material.Material.MaxLayers = 15.0f;
+	m_material.Material.MinLayers = 10.0f;
+
 	// Create the material constant buffer
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(MaterialPropertiesConstantBuffer);

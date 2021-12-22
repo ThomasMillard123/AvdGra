@@ -86,12 +86,31 @@ void ImGuiManager::DrawCamMenu(CameraController* Cams)
 
 static const char* current_Shader = NULL;
 static string Shadername;
+
+enum PostProccessing
+{
+    Colour_Change=0,
+    HDR,
+    Bloom,
+    DepthOfField
+};
+
+enum ScreenSpaceEffects
+{
+    AmbientOcclusion=0,
+    LensFlare
+};
+
+
 static bool LoadShader = false;
-void ImGuiManager::ShaderMenu(ShaderController* Shader)
+void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings, bool& rtt)
 {
     if (!LoadShader) {
         Shadername = Shader->GetShaderData().Name;
         current_Shader = Shadername.c_str();
+
+       
+
         LoadShader = true;
     }
 
@@ -120,6 +139,52 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader)
                 }
                 ImGui::EndCombo();
             }
+
+           
+
+        }
+        if (ImGui::CollapsingHeader("Post Processing"))
+        {
+            PostProcessingCB* currentPPCB= postSettings;
+           
+            bool useColour = currentPPCB->UseColour;
+            ImGui::Checkbox("Colour Change", &useColour);
+            currentPPCB->UseColour = useColour;
+
+            float Colour[] = { currentPPCB->Color.x , currentPPCB->Color.y, currentPPCB->Color.z, currentPPCB->Color.w};
+            ImGui::ColorPicker4("Colour", Colour, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
+            currentPPCB->Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
+
+            bool useHRD = currentPPCB->UseHDR;
+            ImGui::Checkbox("HDR", &useHRD);
+            currentPPCB->UseHDR = useHRD;
+
+            bool useBloom = currentPPCB->UseBloom;
+            ImGui::Checkbox("Bloom", &useBloom);
+            currentPPCB->UseBloom = useBloom;
+
+            bool useDOF = currentPPCB->UseDepthOfF;
+            ImGui::Checkbox("DepthOfField", &useDOF);
+            currentPPCB->UseDepthOfF = useDOF;
+
+            ImGui::InputFloat("DOF Far", &currentPPCB->FarPlane);
+            if (currentPPCB->FarPlane < 0) {
+                currentPPCB->FarPlane = 0;
+            }
+            bool useblue= currentPPCB->UseBlur;
+            ImGui::Checkbox("Blur", &useblue);
+            currentPPCB->UseBlur = useblue;
+
+           
+            ImGui::Checkbox("RTT", &rtt);
+
+            ImGui::SliderFloat("FadeLevel", &currentPPCB->fadeAmount, 0.0f, 1.0f,"%.3f");
+
+            
+        }
+        if (ImGui::CollapsingHeader("Screen Space effects"))
+        {
+           
         }
     }
     ImGui::End();
@@ -166,7 +231,10 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
             ImGui::Text("Texture");
             ImGui::Checkbox("On", &booldata);
 
-
+            ImGui::Text("Parralax Options");
+            ImGui::InputFloat("Hight Scale",  &data.Material.HightScale, 0.00f, 0.0f, "%.2f");
+            ImGui::InputFloat("Max Layer", &data.Material.MaxLayers);
+            ImGui::InputFloat("Min Layer", &data.Material.MinLayers);
 
 
             data.Material.UseTexture = booldata;
@@ -262,7 +330,14 @@ void ImGuiManager::LightControl(LightControll* LightControl)
             ImGui::ColorPicker4("Colour", Colour,ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB);
             CurrLightData.Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
 
-         
+            ImGui::Text("Shdows Direction");
+
+            XMFLOAT3 LightDirection = LightControl->GetLight(current_item1)->CamLight->GetRot();
+
+           ImGui::SliderAngle("Pitch", &LightDirection.x, 0.995f * -90.0f, 0.995f * 90.0f);
+           ImGui::SliderAngle("Yaw", &LightDirection.y, -180.0f, 180.0f);
+
+            LightControl->GetLight(current_item1)->CamLight->SetRot(LightDirection);
 
             switch (LightControl->GetLight(name1)->GetLightData().LightType)
             {

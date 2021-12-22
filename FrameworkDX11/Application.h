@@ -24,6 +24,8 @@
 
 #include"ShaderController.h"
 #include"LightControll.h"
+#include"ShadowMap.h"
+#include"RenderTargetTextureClass.h"
 using namespace std;
 
 class Application
@@ -51,6 +53,42 @@ private:
 	ID3D11Buffer* _pConstantBuffer ;
 
 	ID3D11Buffer* _pLightConstantBuffer;
+	ID3D11Buffer* _pPostProcessingConstantBuffer;
+
+	//post processing
+	//--------------------------------------------------------
+	PostProcessingCB postSettings;
+	
+	bool isRTT = false;
+
+
+	//full screen quad
+	struct SCREEN_VERTEX
+	{
+		XMFLOAT3 pos;
+		XMFLOAT2 tex;
+	};
+
+	ID3D11Buffer* g_pScreenQuadVB = nullptr;
+	
+	ID3D11SamplerState* m_pPointrLinear;
+	ID3D11SamplerState* m_pPointrClamp;
+
+	RenderTargetTextureClass* RTT;
+	RenderTargetTextureClass* Depth;
+	ShadowMap* DepthLight;
+	ShadowMap* DepthLight2;
+
+	RenderTargetTextureClass* Fade;
+	RenderTargetTextureClass* DepthOfField;
+	RenderTargetTextureClass* DownSample;
+	RenderTargetTextureClass* post1;
+	RenderTargetTextureClass* post2;
+	RenderTargetTextureClass* UpSample;
+	RenderTargetTextureClass* alpha;
+	//------------------------------------------------------
+
+
 
 	XMMATRIX                _View;
 	XMMATRIX                _Projection;
@@ -59,7 +97,7 @@ private:
 	int	_viewHeight;
 
 	DrawableGameObject		_GameObject;
-
+	DrawableGameObject		_GameObjectFloor;
 
 	InputControllor* _controll;
 	ShaderController* _Shader;
@@ -69,6 +107,8 @@ private:
 
 	Camera* _Camrea;
 
+
+	
 
 public:
 	Application();

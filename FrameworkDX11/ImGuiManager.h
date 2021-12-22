@@ -7,6 +7,8 @@
 #include"misc/cpp/imgui_stdlib.h"
 #include"CameraController.h";
 
+
+#include"structures.h"
 class DrawableGameObject;
 class LightControll;
 class ShaderController;
@@ -24,7 +26,7 @@ public:
 
 	//menus
 	void DrawCamMenu(CameraController* Cams);
-	void ShaderMenu(ShaderController* Shader);
+	void ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings,bool &rtt);
 	void ObjectControl(DrawableGameObject* GameObject);
 	void LightControl(LightControll* LightControl);
 

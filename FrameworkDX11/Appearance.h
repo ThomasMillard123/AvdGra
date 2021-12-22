@@ -4,7 +4,7 @@
 #include <string>
 #include "DDSTextureLoader.h"
 #include"Structures.h"
-
+#include<vector>
 
 using namespace DirectX;
 using namespace std;
@@ -30,6 +30,7 @@ public:
 	Appearance();
 	~Appearance();
 	HRESULT	initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext);
+	HRESULT	initMeshFloor(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext, UINT Width, UINT Hight);
 	//sets
 	void SetTextureRV(ID3D11ShaderResourceView* textureRV) { m_pTextureResourceView = textureRV; }
 	void SetNormalRV(ID3D11ShaderResourceView* textureRV) { m_pNormalMapResourceView = textureRV; }
@@ -54,6 +55,8 @@ public:
 	void Draw(ID3D11DeviceContext* pImmediateContext);
 
 
+	void SetTextures(ID3D11DeviceContext* pImmediateContext);
+
 private:
 	//data
 	ID3D11Buffer* m_pVertexBuffer;
@@ -62,7 +65,7 @@ private:
 	ID3D11SamplerState* m_pSamplerLinear;
 	MaterialPropertiesConstantBuffer	m_material;
 	ID3D11Buffer* m_pMaterialConstantBuffer = nullptr;
-
+	int NumberOfVert =0;
 	
 	ID3D11ShaderResourceView* m_pNormalMapResourceView;
 	ID3D11ShaderResourceView* m_pParralaxMapResourceView;
