@@ -26,6 +26,7 @@
 #include"LightControll.h"
 #include"ShadowMap.h"
 #include"RenderTargetTextureClass.h"
+#include"BillboradObject.h"
 using namespace std;
 
 class Application
@@ -88,7 +89,7 @@ private:
 	RenderTargetTextureClass* alpha;
 	//------------------------------------------------------
 
-
+	BillboardObject* BillBoradObject;
 
 	XMMATRIX                _View;
 	XMMATRIX                _Projection;

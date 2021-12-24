@@ -35,7 +35,12 @@ cbuffer PostProcessingCB: register(b1)
 	int UseBlur;
 	float fadeAmount;
 	float FarPlane;
-	int pad3;
+	float focalwidth;
+	//--------------
+	float focalDistance;
+	float blerAttenuation;
+	int pad1;
+	int pad2;
 };
 //--------------------------------------------------------------------------------------
 struct VS_INPUT
@@ -80,7 +85,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 {
 
 	float4 texColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-	float depth = IN.depthPos.z / FarPlane;
+	float depth = IN.depthPos.z / IN.depthPos.w;
 	texColor = float4(depth, depth, depth, 1.0f);
 
 	return texColor;

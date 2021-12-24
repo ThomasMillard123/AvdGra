@@ -82,6 +82,7 @@
     <ClCompile Include="RenderTargetTextureClass.cpp" />
     <ClCompile Include="RenderTargetControll.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="BillboradObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="RenderTargetTextureClass.h" />
     <ClInclude Include="RenderTargetControll.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="BillboradObject.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TextureLoading">
@@ -275,6 +277,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="DepthLight.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="BillBord.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

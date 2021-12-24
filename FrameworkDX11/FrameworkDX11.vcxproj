@@ -366,6 +366,7 @@
     <ClInclude Include="..\imgui-master\misc\cpp\imgui_stdlib.h" />
     <ClInclude Include="Appearance.h" />
     <ClInclude Include="Application.h" />
+    <ClInclude Include="BillboradObject.h" />
     <ClInclude Include="C++HelperFunctions.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraController.h" />
@@ -404,6 +405,7 @@
     <ClCompile Include="..\imgui-master\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="Appearance.cpp" />
     <ClCompile Include="Application.cpp" />
+    <ClCompile Include="BillboradObject.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
@@ -455,6 +457,9 @@
       <FileType>Document</FileType>
     </None>
     <None Include="DepthLight.fx">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="BillBord.fx">
       <FileType>Document</FileType>
     </None>
     <FxCompile Include="shader.fx">

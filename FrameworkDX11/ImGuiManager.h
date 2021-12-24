@@ -12,6 +12,7 @@
 class DrawableGameObject;
 class LightControll;
 class ShaderController;
+class BillboardObject;
 
 class ImGuiManager
 {
@@ -29,7 +30,7 @@ public:
 	void ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings,bool &rtt);
 	void ObjectControl(DrawableGameObject* GameObject);
 	void LightControl(LightControll* LightControl);
-
+	void BillBoradControl(BillboardObject* BillControl);
 
 private:
 	void SetBlackGoldStyle();

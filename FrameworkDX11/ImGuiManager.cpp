@@ -2,6 +2,7 @@
 #include"DrawableGameObject.h"
 #include"LightControll.h"
 #include"ShaderController.h"
+#include"BillboradObject.h"
 ImGuiManager::ImGuiManager()
 {
 	IMGUI_CHECKVERSION();
@@ -34,6 +35,8 @@ void ImGuiManager::EndRender()
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
+
+
 static const char* current_item = NULL;
 static string name;
 static bool Load = false;
@@ -86,22 +89,6 @@ void ImGuiManager::DrawCamMenu(CameraController* Cams)
 
 static const char* current_Shader = NULL;
 static string Shadername;
-
-enum PostProccessing
-{
-    Colour_Change=0,
-    HDR,
-    Bloom,
-    DepthOfField
-};
-
-enum ScreenSpaceEffects
-{
-    AmbientOcclusion=0,
-    LensFlare
-};
-
-
 static bool LoadShader = false;
 void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSettings, bool& rtt)
 {
@@ -155,10 +142,6 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
             ImGui::ColorPicker4("Colour", Colour, ImGuiColorEditFlags_Float | ImGuiColorEditFlags_DisplayRGB | ImGuiColorEditFlags_InputRGB);
             currentPPCB->Color = { Colour[0],Colour[1],Colour[2],Colour[3] };
 
-            bool useHRD = currentPPCB->UseHDR;
-            ImGui::Checkbox("HDR", &useHRD);
-            currentPPCB->UseHDR = useHRD;
-
             bool useBloom = currentPPCB->UseBloom;
             ImGui::Checkbox("Bloom", &useBloom);
             currentPPCB->UseBloom = useBloom;
@@ -171,7 +154,14 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
             if (currentPPCB->FarPlane < 0) {
                 currentPPCB->FarPlane = 0;
             }
+
+
+            ImGui::InputFloat("DOF Foacal width", &currentPPCB->focalwidth);
+            ImGui::InputFloat("DOF Focal Dis", &currentPPCB->focalDistance);
+            ImGui::InputFloat("DOF Attuenation", &currentPPCB->blerAttenuation);
+
             bool useblue= currentPPCB->UseBlur;
+
             ImGui::Checkbox("Blur", &useblue);
             currentPPCB->UseBlur = useblue;
 
@@ -182,10 +172,7 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
 
             
         }
-        if (ImGui::CollapsingHeader("Screen Space effects"))
-        {
-           
-        }
+        
     }
     ImGui::End();
 }
@@ -379,15 +366,62 @@ void ImGuiManager::LightControl(LightControll* LightControl)
 
             LightControl->GetLight(name1)->SetLightData(CurrLightData);
 
-            if (ImGui::Button("Reset")) {
-
-              
-            }
-
+          
         }
        
     }
     ImGui::End();
+}
+
+
+
+static const char* current_item_Bill= NULL;
+static string nameBill;
+//static bool Load2 = false;
+static vector<SimpleVertexBill> billpos;
+static int picked=0;
+void ImGuiManager::BillBoradControl(BillboardObject* BillControl)
+{
+    billpos = BillControl->GetPosistions();
+    if (ImGui::Begin("BillBoard Control", FALSE, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        if (ImGui::BeginCombo("##combo", current_item_Bill)) // The second parameter is the label previewed before opening the combo.
+        {
+            for (int n = 0; n < BillControl->GetPosistions().size(); n++)
+            {
+                string name = "Billboard ";
+                name+= to_string(n);
+                bool is_selected = (current_item_Bill == name.c_str()); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(name.c_str(), is_selected)) {
+
+                    nameBill = name;
+                   
+
+                    billpos = BillControl->GetPosistions();
+                    picked = n;
+                    current_item_Bill = nameBill.c_str();
+                }
+                if (is_selected) {
+                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+                    billpos = BillControl->GetPosistions();
+                }
+
+            }
+            ImGui::EndCombo();
+
+        } 
+        ImGui::Text("Pos");
+            ImGui::InputFloat("x", &billpos[picked].Pos.x);
+            ImGui::InputFloat("y", &billpos[picked].Pos.y);
+            ImGui::InputFloat("z", &billpos[picked].Pos.z);
+
+            BillControl->SetPositions(billpos);
+
+
+    }
+    ImGui::End();
+
+
 }
 
 void ImGuiManager::SetBlackGoldStyle()

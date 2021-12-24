@@ -289,6 +289,11 @@ HRESULT Application::InitMesh()
 
 
 
+    hr = _Shader->NewGeoShader("BillBord", L"BillBord.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
+
     //create object mesh
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
     if (FAILED(hr))
@@ -297,6 +302,8 @@ HRESULT Application::InitMesh()
     hr = _GameObjectFloor.GetAppearance()->initMeshFloor(_pd3dDevice, _pImmediateContext, 10,10);
     if (FAILED(hr))
         return hr;
+
+
     _GameObjectFloor.GetTransfrom()->SetPosition(-5, -2, 5);
 
 
@@ -338,6 +345,73 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+
+
+
+
+
+
+
+    BillBoradObject = new BillboardObject("Resources\\bricks_TEX.dds", 2, _pd3dDevice);
+
+    
+
+
+    //SimpleVertex pos[2];
+ 
+    //pos[0].Pos=XMFLOAT3(0, 0, 0);
+    //pos[1].Pos = XMFLOAT3(0, 10, 0);
+
+    //D3D11_BUFFER_DESC instBuffDesc;
+    //ZeroMemory(&instBuffDesc, sizeof(instBuffDesc));
+
+    //instBuffDesc.Usage = D3D11_USAGE_DEFAULT;
+    //instBuffDesc.ByteWidth = sizeof(SimpleVertex) * 2;
+    //instBuffDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    //instBuffDesc.CPUAccessFlags = 0;
+    //instBuffDesc.MiscFlags = 0;
+
+    //D3D11_SUBRESOURCE_DATA instData;
+    //ZeroMemory(&instData, sizeof(instData));
+    //instData.pSysMem = pos;
+    //instData.SysMemPitch = 0;
+    //instData.SysMemSlicePitch = 0;
+  
+ 
+    //hr = _pd3dDevice->CreateBuffer(&instBuffDesc, &instData, &BillboardInstanceBuff);
+
+
+    //pos[0].Pos = XMFLOAT3(0, 5, 0);
+    //pos[1].Pos = XMFLOAT3(0, 10, 0);
+    //_pImmediateContext->UpdateSubresource(BillboardInstanceBuff, 0, NULL, pos, 0, 0);
+
+    //// Create the vertex buffer we will send to the shaders for the billboard data. We are going to use
+    //// the instancing technique for the billboards, and our billboard geometry shader only requires a single
+    //// point to be an input, so all we need to do is create a buffer that stores a single point!
+    //D3D11_BUFFER_DESC billboardBufferDesc;
+    //ZeroMemory(&billboardBufferDesc, sizeof(billboardBufferDesc));
+
+    //billboardBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+    //billboardBufferDesc.ByteWidth = sizeof(SimpleVertex);
+    //billboardBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    //billboardBufferDesc.CPUAccessFlags = 0;
+    //billboardBufferDesc.MiscFlags = 0;
+
+    //D3D11_SUBRESOURCE_DATA ginitData;
+
+    //// Create a single vertex at the point 0,0,0. None of the other members will be used for billboarding
+    //SimpleVertex gv;
+    //gv.Pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+    //ginitData.pSysMem = &gv;
+    //_pd3dDevice->CreateBuffer(&billboardBufferDesc, &ginitData, &BillboardVertBuff);
+
+
+
+
+
+
+
     return hr;
 }
 
@@ -362,7 +436,13 @@ HRESULT Application::InitWorld(int width, int height)
     postSettings.UseHDR = false;
     postSettings.UseBlur = false;
     postSettings.fadeAmount = 1.0f;
-    postSettings.FarPlane = 10.0f;
+    postSettings.FarPlane = 100.0f;
+    postSettings.focalDistance = 100.0f;
+    postSettings.focalwidth = 100.0f;
+    postSettings.blerAttenuation = 0.5f;
+
+
+
     SCREEN_VERTEX svQuad[4];
 
     svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
@@ -667,6 +747,7 @@ void Application::Update()
     _GameObject.update(t, _pImmediateContext);
     _GameObjectFloor.update(t, _pImmediateContext);
     _pLightContol->update(t, _pImmediateContext);
+    BillBoradObject->UpdatePositions(_pImmediateContext);
 }
 
 void Application::Draw()
@@ -737,6 +818,7 @@ void Application::Draw()
     cb1.mView = XMMatrixTranspose(RTTview);
     cb1.mProjection = XMMatrixTranspose(RTTprojection);
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
+    cb1.camPos = XMFLOAT4(_pCamControll->GetCurentCam()->GetPosition().x, _pCamControll->GetCurentCam()->GetPosition().y, _pCamControll->GetCurentCam()->GetPosition().z,0.0f);
     _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
 
@@ -783,6 +865,11 @@ void Application::Draw()
     _GameObjectFloor.GetAppearance()->SetTextures(_pImmediateContext);
     _GameObjectFloor.draw(_pImmediateContext);
 
+
+
+    BillBoradObject->Draw(_pImmediateContext, _Shader->GetGeoShader(),&cb1, _pConstantBuffer);
+
+    _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
 
     //post 2d 
     if (isRTT) {
@@ -848,6 +935,13 @@ void Application::Draw()
     }
     else
     {
+
+        _pImmediateContext->VSSetShader(_Shader->GetShaderByName("NoEffects")._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderByName("NoEffects")._pPixelShader, nullptr, 0);
+        _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+
         _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
 
@@ -1156,7 +1250,7 @@ void Application::Draw()
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
     DimGuiManager->ShaderMenu(_Shader,&postSettings,isRTT);
-
+    DimGuiManager->BillBoradControl(BillBoradObject);
     DimGuiManager->EndRender();
 
     // Present our back buffer to our front buffer
