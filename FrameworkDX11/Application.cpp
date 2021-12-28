@@ -110,9 +110,7 @@ Application::Application() {
     _pRenderTargetView = nullptr;
     _pConstantBuffer = nullptr;
 
-    _pVertexShader = nullptr;
-    _pPixelShader = nullptr;
-    _pVertexLayout = nullptr;
+   
 
     _pConstantBuffer = nullptr;
     _pLightConstantBuffer = nullptr;
@@ -347,70 +345,9 @@ HRESULT Application::InitMesh()
 
 
 
-
-
-
-
-
     BillBoradObject = new BillboardObject("Resources\\bricks_TEX.dds", 2, _pd3dDevice);
 
     
-
-
-    //SimpleVertex pos[2];
- 
-    //pos[0].Pos=XMFLOAT3(0, 0, 0);
-    //pos[1].Pos = XMFLOAT3(0, 10, 0);
-
-    //D3D11_BUFFER_DESC instBuffDesc;
-    //ZeroMemory(&instBuffDesc, sizeof(instBuffDesc));
-
-    //instBuffDesc.Usage = D3D11_USAGE_DEFAULT;
-    //instBuffDesc.ByteWidth = sizeof(SimpleVertex) * 2;
-    //instBuffDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    //instBuffDesc.CPUAccessFlags = 0;
-    //instBuffDesc.MiscFlags = 0;
-
-    //D3D11_SUBRESOURCE_DATA instData;
-    //ZeroMemory(&instData, sizeof(instData));
-    //instData.pSysMem = pos;
-    //instData.SysMemPitch = 0;
-    //instData.SysMemSlicePitch = 0;
-  
- 
-    //hr = _pd3dDevice->CreateBuffer(&instBuffDesc, &instData, &BillboardInstanceBuff);
-
-
-    //pos[0].Pos = XMFLOAT3(0, 5, 0);
-    //pos[1].Pos = XMFLOAT3(0, 10, 0);
-    //_pImmediateContext->UpdateSubresource(BillboardInstanceBuff, 0, NULL, pos, 0, 0);
-
-    //// Create the vertex buffer we will send to the shaders for the billboard data. We are going to use
-    //// the instancing technique for the billboards, and our billboard geometry shader only requires a single
-    //// point to be an input, so all we need to do is create a buffer that stores a single point!
-    //D3D11_BUFFER_DESC billboardBufferDesc;
-    //ZeroMemory(&billboardBufferDesc, sizeof(billboardBufferDesc));
-
-    //billboardBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-    //billboardBufferDesc.ByteWidth = sizeof(SimpleVertex);
-    //billboardBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-    //billboardBufferDesc.CPUAccessFlags = 0;
-    //billboardBufferDesc.MiscFlags = 0;
-
-    //D3D11_SUBRESOURCE_DATA ginitData;
-
-    //// Create a single vertex at the point 0,0,0. None of the other members will be used for billboarding
-    //SimpleVertex gv;
-    //gv.Pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-    //ginitData.pSysMem = &gv;
-    //_pd3dDevice->CreateBuffer(&billboardBufferDesc, &ginitData, &BillboardVertBuff);
-
-
-
-
-
-
 
     return hr;
 }
@@ -672,7 +609,7 @@ HRESULT Application::InitDevice()
 
 
 
-
+    //smaplers
     D3D11_SAMPLER_DESC sampDesc;
     ZeroMemory(&sampDesc, sizeof(sampDesc));
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
@@ -695,20 +632,24 @@ HRESULT Application::InitDevice()
     hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pPointrClamp);
     if (FAILED(hr))
         return hr;
+
     // Create a render target view 2nd
+    RenderTargetControl = new RenderTargetControll();
+    RenderTargetControl->CreatRenderTarget("RTT",width, height,_pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Depth", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("DepthOfField", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Fade", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("post1", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("post2", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("DownSample", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("UpSample", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("alpha", width, height, _pd3dDevice);
 
+ 
 
-    RTT = new RenderTargetTextureClass(_pd3dDevice, width, height);
-    Depth = new RenderTargetTextureClass(_pd3dDevice, width, height);
     DepthLight= new ShadowMap(_pd3dDevice, width, height);
   
-    DepthOfField= new RenderTargetTextureClass(_pd3dDevice, width, height);
-    Fade = new RenderTargetTextureClass(_pd3dDevice, width, height);;
-    DownSample= new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    post1 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    post2 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    UpSample= new RenderTargetTextureClass(_pd3dDevice, width, height);
-    alpha= new RenderTargetTextureClass(_pd3dDevice, width, height);
+
 
 
     hr = InitMesh();
@@ -797,8 +738,9 @@ void Application::Draw()
 
 
     //render 3d objects
+    RenderTargetControl->GetRenderTarget("RTT")->SetRenderTarget(_pImmediateContext);
+
     
-    RTT->SetRenderTarget(_pImmediateContext);
     _pImmediateContext->PSSetSamplers(1, 1, &m_pPointrClamp);
     _pImmediateContext->PSSetSamplers(2, 1, &m_pPointrClamp);
 
@@ -920,7 +862,7 @@ void Application::Draw()
         //_pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
 
         //setTextures to buffer
-        a = RTT->GetTexture();
+        a = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
         _pImmediateContext->PSSetShaderResources(0, 1, &a);
 
 
@@ -952,7 +894,8 @@ void Application::Draw()
 
 
         //render 3d objects
-        Depth->SetRenderTarget(_pImmediateContext);
+        RenderTargetControl->GetRenderTarget("Depth")->SetRenderTarget(_pImmediateContext);
+       
        
      
 
@@ -1030,7 +973,8 @@ void Application::Draw()
 
         if (&postSettings.UseBloom) {
             //bloom
-            alpha->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("alpha")->SetRenderTarget(_pImmediateContext);
+           
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Alpha")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -1044,7 +988,7 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = RTT->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
 
             _pImmediateContext->Draw(4, 0);
@@ -1064,7 +1008,8 @@ void Application::Draw()
             _pImmediateContext->RSSetViewports(1, &vp2);
 
            //down sample
-            DownSample->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("DownSample")->SetRenderTarget(_pImmediateContext);
+            
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1078,18 +1023,19 @@ void Application::Draw()
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
             if (postSettings.UseBloom) {
-                a = alpha->GetTexture();
+                a = RenderTargetControl->GetRenderTarget("alpha")->GetTexture();
             }
             else
             {
-                a = RTT->GetTexture();
+                a = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
             }
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
 
             _pImmediateContext->Draw(4, 0);
 
             //blend 1
-            post1->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("post1")->SetRenderTarget(_pImmediateContext);
+          
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian1")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -1103,14 +1049,15 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-             a = DownSample->GetTexture();
+             a = RenderTargetControl->GetRenderTarget("DownSample")->GetTexture();
 
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
 
             _pImmediateContext->Draw(4, 0);
 
             //blend2
-            post2->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("post2")->SetRenderTarget(_pImmediateContext);
+      
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian2")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -1124,7 +1071,7 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = post1->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("post1")->GetTexture();
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
 
             _pImmediateContext->Draw(4, 0);
@@ -1140,7 +1087,8 @@ void Application::Draw()
             _pImmediateContext->RSSetViewports(1, &vp);
 
             //upsample
-            UpSample->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("UpSample")->SetRenderTarget(_pImmediateContext);
+            
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1154,7 +1102,7 @@ void Application::Draw()
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
             
-                a = post2->GetTexture();
+                a = RenderTargetControl->GetRenderTarget("post2")->GetTexture();
             
             
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
@@ -1168,7 +1116,8 @@ void Application::Draw()
 
         if (postSettings.UseDepthOfF) {
             //DOF implmentation
-            DepthOfField->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("DepthOfField")->SetRenderTarget(_pImmediateContext);
+           
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("DepthOfField")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1178,9 +1127,9 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = RTT->GetTexture();
-            b = UpSample->GetTexture();
-            c = Depth->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
+            b = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
+            c = RenderTargetControl->GetRenderTarget("Depth")->GetTexture();
 
             _pImmediateContext->PSSetShaderResources(0, 1, &a);
             _pImmediateContext->PSSetShaderResources(1, 1, &b);
@@ -1192,7 +1141,8 @@ void Application::Draw()
 
 
         //fade implmentation
-        Fade->SetRenderTarget(_pImmediateContext);
+        RenderTargetControl->GetRenderTarget("Fade")->SetRenderTarget(_pImmediateContext);
+        
         _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Fade")._pVertexLayout);
         _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
         _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1203,13 +1153,13 @@ void Application::Draw()
         _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
         if (postSettings.UseBlur) {
-            a = UpSample->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
         }
         else if (postSettings.UseDepthOfF) {
-            a = DepthOfField->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("DepthOfField")->GetTexture();
         }
         else {
-            a = RTT->GetTexture();
+            a = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
         }
         _pImmediateContext->PSSetShaderResources(0, 1, &a);
         _pImmediateContext->Draw(4, 0);
@@ -1230,8 +1180,8 @@ void Application::Draw()
       
     
        
-        a = Fade->GetTexture();
-        b = UpSample->GetTexture();
+        a = RenderTargetControl->GetRenderTarget("Fade")->GetTexture();
+        b = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
         
 
 
@@ -1299,7 +1249,8 @@ void Application::setupLightForRender()
 void Application::Cleanup()
 {
         _GameObject.cleanup();
-    
+        _GameObjectFloor.cleanup();
+
         delete _controll;
         _controll = nullptr;
         
@@ -1315,9 +1266,13 @@ void Application::Cleanup()
         delete _Shader;
         _Shader = nullptr;
 
+        delete RenderTargetControl;
+        RenderTargetControl = nullptr;
 
-     
-
+        delete BillBoradObject;
+        BillBoradObject = nullptr;
+        delete DepthLight;
+        DepthLight = nullptr;
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };
@@ -1330,10 +1285,10 @@ void Application::Cleanup()
     
         if (_pLightConstantBuffer)
             _pLightConstantBuffer->Release();
-        if (_pVertexLayout) _pVertexLayout->Release();
+      
         if( _pConstantBuffer ) _pConstantBuffer->Release();
-        if( _pVertexShader ) _pVertexShader->Release();
-        if( _pPixelShader ) _pPixelShader->Release();
+        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+
         if( _pDepthStencil ) _pDepthStencil->Release();
         if( _pDepthStencilView ) _pDepthStencilView->Release();
         if( _pRenderTargetView ) _pRenderTargetView->Release();
@@ -1343,11 +1298,10 @@ void Application::Cleanup()
         if( _pImmediateContext ) _pImmediateContext->Release();
     
     
-        //RTT Remove
-        
         if (g_pScreenQuadVB) g_pScreenQuadVB->Release();
         if (m_pPointrLinear) m_pPointrLinear->Release();
-        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+        if (m_pPointrLinear) m_pPointrClamp->Release();
+       
 
         ID3D11Debug* debugDevice = nullptr;
         _pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugDevice));

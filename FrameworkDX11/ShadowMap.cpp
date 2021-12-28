@@ -33,14 +33,15 @@ ShadowMap::ShadowMap(ID3D11Device* device, UINT width, UINT height)
 	srvDesc.Texture2D.MostDetailedMip = 0;
 	HR = device->CreateShaderResourceView(depthMap, &srvDesc, &mDepthMapSRV);
 	
+
+	depthMap->Release();
 	
 }
 
 ShadowMap::~ShadowMap()
 {
 
-	mDepthMapDSV->Release();
-	mDepthMapSRV->Release();
+	CleanUp();
 }
 
 
@@ -55,6 +56,16 @@ void ShadowMap::BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc)
 	dc->OMSetRenderTargets(1, renderTargets, mDepthMapDSV);
 	
 	dc->ClearDepthStencilView(mDepthMapDSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
+void ShadowMap::CleanUp()
+{
+	if (mDepthMapSRV) {
+		mDepthMapSRV->Release();
+	}
+	if (mDepthMapDSV) {
+		mDepthMapDSV->Release();
+	}
 }
 
 

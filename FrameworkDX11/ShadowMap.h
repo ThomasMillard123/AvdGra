@@ -22,6 +22,7 @@ private:
 	ID3D11DepthStencilView* mDepthMapDSV;
 	D3D11_VIEWPORT mViewport;
 	
+	void CleanUp();
 
 };
 

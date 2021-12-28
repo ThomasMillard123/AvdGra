@@ -12,11 +12,11 @@ public:
 	~RenderTargetControll();
 
 	RenderTargetTextureClass* GetRenderTarget(int Number);
-	RenderTargetTextureClass* GetRenderTarget(string String);
+	RenderTargetTextureClass* GetRenderTarget(string Name);
 
-	void CreatRenderTarget(string name, UINT width, UINT Hight);
+	void CreatRenderTarget(string name, UINT width, UINT Hight, ID3D11Device* _pd3dDevice);
 
-
+	
 private:
 	vector<RenderTargetTextureClass*> TargetTexture;
 
