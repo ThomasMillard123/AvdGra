@@ -8,6 +8,7 @@ using namespace DirectX;
 using namespace std;
 /// <summary>
 /// class to hold all transform data of a object
+/// created from https://github.com/ThomasMillard123/FGAGC
 /// </summary>
 class Transform
 {

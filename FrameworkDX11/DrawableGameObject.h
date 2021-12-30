@@ -13,6 +13,10 @@
 using namespace DirectX;
 
 
+/// <summary>
+/// manage a drawable object
+/// created from https://github.com/ThomasMillard123/FGAGC
+/// </summary>
 class DrawableGameObject
 {
 public:

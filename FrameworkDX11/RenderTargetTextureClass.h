@@ -5,14 +5,18 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <directxcolors.h>
-
+#include<string>
 using namespace DirectX;
-
+using namespace std;
+/// <summary>
+/// stores the render target data
+/// </summary>
 class RenderTargetTextureClass
 {
 public:
 	RenderTargetTextureClass();
 	RenderTargetTextureClass(ID3D11Device* _pd3dDevice, UINT width, UINT height);
+	RenderTargetTextureClass(string Name,ID3D11Device* _pd3dDevice, UINT width, UINT height);
 	~RenderTargetTextureClass();
 
 	HRESULT Inizalize(ID3D11Device* _pd3dDevice, UINT width, UINT height);
@@ -20,17 +24,18 @@ public:
 
 
 	ID3D11ShaderResourceView* GetTexture() { return _pShaderResourceView; }
-
+	string GetName() { return Name; }
 private:
-	// RTT front
+	//  front buffer
 	ID3D11Texture2D* _pRrenderTargetTexture;
 	ID3D11RenderTargetView* _pRenderTargetView;
-	//RTT Depth
+	// Depth buffer
 	ID3D11Texture2D* _pDepthStencil = nullptr;
 	ID3D11DepthStencilView* _pDepthStencilView;
 
+	
 	ID3D11ShaderResourceView* _pShaderResourceView;
-
+	string Name;
 
 	void CleanUp();
 };

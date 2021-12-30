@@ -69,7 +69,6 @@
     <ClCompile Include="..\imgui-master\backends\imgui_impl_win32.cpp">
       <Filter>DImGUI</Filter>
     </ClCompile>
-    <ClCompile Include="ImGuiManager.cpp" />
     <ClCompile Include="Appearance.cpp">
       <Filter>ObjectFiles</Filter>
     </ClCompile>
@@ -79,9 +78,21 @@
     <ClCompile Include="..\imgui-master\misc\cpp\imgui_stdlib.cpp">
       <Filter>DImGUI</Filter>
     </ClCompile>
-    <ClCompile Include="RenderTargetTextureClass.cpp" />
-    <ClCompile Include="RenderTargetControll.cpp" />
-    <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="RenderTargetControll.cpp">
+      <Filter>RenderTarget</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderTargetTextureClass.cpp">
+      <Filter>RenderTarget</Filter>
+    </ClCompile>
+    <ClCompile Include="BillboradObject.cpp">
+      <Filter>Billboarding</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadowMap.cpp">
+      <Filter>ShadowDepth</Filter>
+    </ClCompile>
+    <ClCompile Include="ImGuiManager.cpp">
+      <Filter>DImGUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -158,7 +169,6 @@
     <ClInclude Include="..\imgui-master\backends\imgui_impl_win32.h">
       <Filter>DImGUI</Filter>
     </ClInclude>
-    <ClInclude Include="ImGuiManager.h" />
     <ClInclude Include="Appearance.h">
       <Filter>ObjectFiles</Filter>
     </ClInclude>
@@ -168,9 +178,21 @@
     <ClInclude Include="..\imgui-master\misc\cpp\imgui_stdlib.h">
       <Filter>DImGUI</Filter>
     </ClInclude>
-    <ClInclude Include="RenderTargetTextureClass.h" />
-    <ClInclude Include="RenderTargetControll.h" />
-    <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="RenderTargetTextureClass.h">
+      <Filter>RenderTarget</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTargetControll.h">
+      <Filter>RenderTarget</Filter>
+    </ClInclude>
+    <ClInclude Include="BillboradObject.h">
+      <Filter>Billboarding</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadowMap.h">
+      <Filter>ShadowDepth</Filter>
+    </ClInclude>
+    <ClInclude Include="ImGuiManager.h">
+      <Filter>DImGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TextureLoading">
@@ -209,9 +231,27 @@
     <Filter Include="DImGUI">
       <UniqueIdentifier>{35c5ace8-1db7-44b4-9237-ab9fbd7dc97b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="RenderTarget">
+      <UniqueIdentifier>{a04706e2-e0c5-42ac-b3d5-94f4f93a26ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Billboarding">
+      <UniqueIdentifier>{4b599a5c-fb4d-49ad-9e6f-acc9ef44184a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ShadowDepth">
+      <UniqueIdentifier>{3e394d79-c64f-4a68-8437-39fc7746621d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\stone.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="Resources\bricks_DISP.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="Resources\bricks_NORM.dds">
+      <Filter>Textures</Filter>
+    </Image>
+    <Image Include="Resources\bricks_TEX.dds">
       <Filter>Textures</Filter>
     </Image>
   </ItemGroup>
@@ -275,6 +315,9 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="DepthLight.fx">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="BillBord.fx">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

@@ -119,15 +119,14 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 	float3 tangentSpaceNormal = normalize(mul(vectorV, TBN_inv));
 	return tangentSpaceNormal;
 }
-
+//simple parrallax
 float2 ParallaxMapping(float2 texCoord, float3 viewDir)
 {
-	
+	//get hight
 	float height = txParallax.Sample(samLinear, texCoord).r;
-	//assumed that scaled height = -biased height -> h * s + b = h * s - s = s(h - 1)
-	//because in presentation it states that reasonable scale value = 0.02, and bias = [-0.01, -0.02]
+	//biais and scale height
 	float heightSB = Material.HightScale * (height - 1.0);
-
+	//creat new UV
 	float2 parallax = viewDir.xy * heightSB;
 
 	return (texCoord + parallax);
@@ -372,17 +371,18 @@ PS_INPUT VS(VS_INPUT input)
 
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
-
+	//get parallax uvs
 	float2 parallaxTexCoords = ParallaxMapping(IN.Tex, IN.eyeVectorTS);
 
 	if (parallaxTexCoords.x > 1.0 || parallaxTexCoords.y > 1.0 || parallaxTexCoords.x < 0.0 || parallaxTexCoords.y < 0.0)
 		discard;
 
-
+	//use parallax in normal mapping
 	float4 bumpMap = txNormal.Sample(samLinear, parallaxTexCoords);
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
 
+	//compute llighting useing new values
 	LightingResult lit = ComputeLighting(IN.worldPos, bumpMap,IN.eyeVectorTS,IN.lightVectorTS, IN.lightViewPosition);
 
 	float4 texColor = { 1, 1, 1, 1 };

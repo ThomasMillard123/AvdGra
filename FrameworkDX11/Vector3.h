@@ -4,6 +4,9 @@
 #include<assert.h>
 using namespace std;
 
+/// <summary>
+/// created from https://github.com/ThomasMillard123/FGAGC
+/// </summary>
 class Vector3
 {
 public:

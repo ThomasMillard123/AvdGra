@@ -9,6 +9,11 @@ RenderTargetTextureClass::RenderTargetTextureClass(ID3D11Device* _pd3dDevice, UI
     Inizalize(_pd3dDevice, width, height);
 }
 
+RenderTargetTextureClass::RenderTargetTextureClass(string Name, ID3D11Device* _pd3dDevice, UINT width, UINT height): Name(Name)
+{
+    Inizalize(_pd3dDevice, width, height);
+}
+
 RenderTargetTextureClass::~RenderTargetTextureClass()
 {
     CleanUp();

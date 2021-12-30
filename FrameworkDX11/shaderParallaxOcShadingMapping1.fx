@@ -170,6 +170,7 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 	return FinalTexCoords;
 
 }
+//parrallax shadows 
 float ParallaxSelfShadowing(float3 toLight, float2 texCoord, float3 Normal)
 {
 	

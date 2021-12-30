@@ -15,8 +15,13 @@ cbuffer PostProcessingCB: register(b0)
     //------------
     int UseBlur;
     float fadeAmount;
+    float FarPlane;
+    float focalwidth;
+    //--------------
+    float focalDistance;
+    float blerAttenuation;
+    int pad1;
     int pad2;
-    int pad3;
 };
 
 struct QuadVS_Input 
@@ -47,7 +52,8 @@ QuadVS_Output QuadVS(QuadVS_Input Input)
 float4 QuadPS(QuadVS_Output Input) : SV_TARGET
 {
     float4 vColor = tex.Sample(PointSampler, Input.Tex);
-    float Threshold = 0.3;
+    
+    //get what is bight
     if (vColor.x <= 1 || vColor.y <= 1|| vColor.z <= 1|| vColor.a <= 1) {
         vColor = 0;
     }

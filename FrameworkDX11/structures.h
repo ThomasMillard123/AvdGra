@@ -13,6 +13,7 @@ struct ConstantBuffer
 	XMMATRIX mView;
 	XMMATRIX mProjection;
 	XMFLOAT4 vOutputColor;
+	XMFLOAT4 camPos;
 };
 
 struct _Material
@@ -126,5 +127,10 @@ struct PostProcessingCB
 	int UseBlur;
 	float fadeAmount;
 	float FarPlane;
-	int pad3;
+	float focalwidth;
+	//--------------
+	float focalDistance;
+	float blerAttenuation;
+	int pad1;
+	int pad2;
 };

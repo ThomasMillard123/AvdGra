@@ -368,6 +368,7 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	bumpMap = (bumpMap * 2.0f) - 1.0f;
 	bumpMap = float4(normalize(bumpMap.xyz), 1);
 	
+	//use bump map as normal with new tangent space values
 	LightingResult lit = ComputeLighting(IN.worldPos, bumpMap,IN.eyeVectorTS,IN.lightVectorTS, IN.lightViewPosition);
 
 	float4 texColor = { 1, 1, 1, 1 };

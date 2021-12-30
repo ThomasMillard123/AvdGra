@@ -34,7 +34,7 @@ public:
 	//sets
 	void SetTextureRV(ID3D11ShaderResourceView* textureRV) { m_pTextureResourceView = textureRV; }
 	void SetNormalRV(ID3D11ShaderResourceView* textureRV) { m_pNormalMapResourceView = textureRV; }
-	
+	void SetTextures(ID3D11DeviceContext* pImmediateContext);
 	//gets
 	ID3D11Buffer* getVertexBuffer() { return m_pVertexBuffer; }
 	ID3D11Buffer* getIndexBuffer() { return m_pIndexBuffer; }
@@ -55,7 +55,7 @@ public:
 	void Draw(ID3D11DeviceContext* pImmediateContext);
 
 
-	void SetTextures(ID3D11DeviceContext* pImmediateContext);
+	
 
 private:
 	//data

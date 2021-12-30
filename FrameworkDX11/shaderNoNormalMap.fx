@@ -210,7 +210,7 @@ float Shadow(float4 VertLightPos, int Number) {
 	else {
 		//bias to make correction to depth 
 		float zBiais = depthpos.z - 0.00005f;
-		uint width, hight;
+		
 		//PCF
 		//light number
 		if (Number == 1) {
@@ -378,3 +378,6 @@ float4 PSSolid(PS_INPUT input) : SV_Target
 {
 	return vOutputColor;
 }
+
+
+

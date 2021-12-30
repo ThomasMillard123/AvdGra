@@ -18,8 +18,13 @@ cbuffer PostProcessingCB: register(b0)
     //------------
     int UseBlur;
     float fadeAmount;
-    float FarPlane;;
-    int pad3;
+    float FarPlane;
+    float focalwidth;
+    //--------------
+    float focalDistance;
+    float blerAttenuation;
+    int pad1;
+    int pad2;
 };
 
 struct QuadVS_Input
@@ -55,12 +60,13 @@ float4 QuadPS(QuadVS_Output Input) : SV_TARGET
     float4 depth = { 0, 0, 1, 1 };
     depth = txDepth.Sample(PointSampler, Input.Tex);
 
-    float zDepth = saturate(depth.z);
-    zDepth = zDepth / FarPlane;
+    //find if depth is at focal point transition
+    float zDepth = smoothstep(0, focalwidth, abs(focalDistance - (depth.z * FarPlane)));
+    
   
 
-    Colour = zDepth * blurTex + (1.0f - zDepth) * vColor;
-
+   //blend between bluer immage and non bluered immage
+    Colour= lerp(vColor, blurTex, saturate(zDepth) * blerAttenuation);
     
     return Colour;
 }

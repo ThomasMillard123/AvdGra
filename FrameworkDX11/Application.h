@@ -10,7 +10,6 @@
 #include <iostream>
 #include <vector>
 
-#include "Camera.h"
 #include "InputControllor.h"
 #include "DDSTextureLoader.h"
 #include "resource.h"
@@ -18,7 +17,7 @@
 #include "structures.h"
 
 #include"CameraController.h"
-#include"Camera.h"
+
 
 #include"ImGuiManager.h"
 
@@ -26,6 +25,8 @@
 #include"LightControll.h"
 #include"ShadowMap.h"
 #include"RenderTargetTextureClass.h"
+#include"BillboradObject.h"
+#include"RenderTargetControll.h"
 using namespace std;
 
 class Application
@@ -44,11 +45,7 @@ private:
 	ID3D11RenderTargetView* _pRenderTargetView ;
 	ID3D11Texture2D* _pDepthStencil = nullptr;
 	ID3D11DepthStencilView* _pDepthStencilView = nullptr;
-	ID3D11VertexShader* _pVertexShader;
-
-	ID3D11PixelShader* _pPixelShader ;
-
-	ID3D11InputLayout* _pVertexLayout ;
+	
 
 	ID3D11Buffer* _pConstantBuffer ;
 
@@ -72,23 +69,16 @@ private:
 	ID3D11Buffer* g_pScreenQuadVB = nullptr;
 	
 	ID3D11SamplerState* m_pPointrLinear;
-	ID3D11SamplerState* m_pPointrClamp;
+	ID3D11SamplerState* m_pLINEARBORDER;
 
-	RenderTargetTextureClass* RTT;
-	RenderTargetTextureClass* Depth;
+	
 	ShadowMap* DepthLight;
-	ShadowMap* DepthLight2;
+	RenderTargetControll* RenderTargetControl;
 
-	RenderTargetTextureClass* Fade;
-	RenderTargetTextureClass* DepthOfField;
-	RenderTargetTextureClass* DownSample;
-	RenderTargetTextureClass* post1;
-	RenderTargetTextureClass* post2;
-	RenderTargetTextureClass* UpSample;
-	RenderTargetTextureClass* alpha;
 	//------------------------------------------------------
 
-
+	BillboardObject* BillBoradObject;
+	
 
 	XMMATRIX                _View;
 	XMMATRIX                _Projection;
@@ -135,7 +125,7 @@ private:
 	HRESULT		InitMesh();
 	HRESULT		InitWorld(int width, int height);
 
-	HRESULT CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
+	
 
 };
 

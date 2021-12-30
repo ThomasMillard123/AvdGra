@@ -110,19 +110,12 @@ Application::Application() {
     _pRenderTargetView = nullptr;
     _pConstantBuffer = nullptr;
 
-    _pVertexShader = nullptr;
-    _pPixelShader = nullptr;
-    _pVertexLayout = nullptr;
+   
 
     _pConstantBuffer = nullptr;
     _pLightConstantBuffer = nullptr;
 
-   /* CCWcullMode = nullptr;
-    CWcullMode = nullptr;
-    DSLessEqual = nullptr;
-    RSCullNone = nullptr;
-    _WindowHeight = 0;
-    _WindowWidth = 0;*/
+
 
     DimGuiManager = new ImGuiManager();
 
@@ -288,6 +281,11 @@ HRESULT Application::InitMesh()
         return hr;
 
 
+    //gemoatry shader
+    hr = _Shader->NewGeoShader("BillBord", L"BillBord.fx", _pd3dDevice, _pImmediateContext);
+    if (FAILED(hr))
+        return hr;
+
 
     //create object mesh
     hr = _GameObject.GetAppearance()->initMesh(_pd3dDevice, _pImmediateContext);
@@ -297,6 +295,8 @@ HRESULT Application::InitMesh()
     hr = _GameObjectFloor.GetAppearance()->initMeshFloor(_pd3dDevice, _pImmediateContext, 10,10);
     if (FAILED(hr))
         return hr;
+
+
     _GameObjectFloor.GetTransfrom()->SetPosition(-5, -2, 5);
 
 
@@ -338,6 +338,12 @@ HRESULT Application::InitMesh()
     if (FAILED(hr))
         return hr;
 
+
+
+    BillBoradObject = new BillboardObject("Resources\\bricks_TEX.dds", 2, _pd3dDevice);
+
+    
+
     return hr;
 }
 
@@ -362,7 +368,13 @@ HRESULT Application::InitWorld(int width, int height)
     postSettings.UseHDR = false;
     postSettings.UseBlur = false;
     postSettings.fadeAmount = 1.0f;
-    postSettings.FarPlane = 10.0f;
+    postSettings.FarPlane = 100.0f;
+    postSettings.focalDistance = 100.0f;
+    postSettings.focalwidth = 100.0f;
+    postSettings.blerAttenuation = 0.5f;
+
+
+
     SCREEN_VERTEX svQuad[4];
 
     svQuad[0].pos = XMFLOAT3(-1.0f, 1.0f, 0.0f);
@@ -390,39 +402,6 @@ HRESULT Application::InitWorld(int width, int height)
     if (FAILED(hr))
         return hr;
 
-
-    return S_OK;
-}
-
-HRESULT Application::CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut)
-{
-    HRESULT hr = S_OK;
-
-    DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
-#ifdef _DEBUG
-    // Set the D3DCOMPILE_DEBUG flag to embed debug information in the shaders.
-    // Setting this flag improves the shader debugging experience, but still allows 
-    // the shaders to be optimized and to run exactly the way they will run in 
-    // the release configuration of this program.
-    dwShaderFlags |= D3DCOMPILE_DEBUG;
-
-    // Disable optimizations to further improve shader debugging
-    dwShaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
-#endif
-
-    ID3DBlob* pErrorBlob = nullptr;
-    hr = D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel,
-        dwShaderFlags, 0, ppBlobOut, &pErrorBlob);
-    if (FAILED(hr))
-    {
-        if (pErrorBlob)
-        {
-            OutputDebugStringA(reinterpret_cast<const char*>(pErrorBlob->GetBufferPointer()));
-            pErrorBlob->Release();
-        }
-        return hr;
-    }
-    if (pErrorBlob) pErrorBlob->Release();
 
     return S_OK;
 }
@@ -592,7 +571,7 @@ HRESULT Application::InitDevice()
 
 
 
-
+    //smaplers
     D3D11_SAMPLER_DESC sampDesc;
     ZeroMemory(&sampDesc, sizeof(sampDesc));
     sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
@@ -612,23 +591,27 @@ HRESULT Application::InitDevice()
     sampDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
     sampDesc.BorderColor[0] = 1.0f;
     sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-    hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pPointrClamp);
+    hr = _pd3dDevice->CreateSamplerState(&sampDesc, &m_pLINEARBORDER);
     if (FAILED(hr))
         return hr;
+
     // Create a render target view 2nd
+    RenderTargetControl = new RenderTargetControll();
+    RenderTargetControl->CreatRenderTarget("RTT",width, height,_pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Depth", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("DepthOfField", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Fade", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Gauss1", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("Gauss2", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("DownSample", width / 2, height / 2, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("UpSample", width, height, _pd3dDevice);
+    RenderTargetControl->CreatRenderTarget("alpha", width, height, _pd3dDevice);
 
+ 
 
-    RTT = new RenderTargetTextureClass(_pd3dDevice, width, height);
-    Depth = new RenderTargetTextureClass(_pd3dDevice, width, height);
     DepthLight= new ShadowMap(_pd3dDevice, width, height);
   
-    DepthOfField= new RenderTargetTextureClass(_pd3dDevice, width, height);
-    Fade = new RenderTargetTextureClass(_pd3dDevice, width, height);;
-    DownSample= new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    post1 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    post2 = new RenderTargetTextureClass(_pd3dDevice, width/2, height/2);
-    UpSample= new RenderTargetTextureClass(_pd3dDevice, width, height);
-    alpha= new RenderTargetTextureClass(_pd3dDevice, width, height);
+
 
 
     hr = InitMesh();
@@ -667,12 +650,13 @@ void Application::Update()
     _GameObject.update(t, _pImmediateContext);
     _GameObjectFloor.update(t, _pImmediateContext);
     _pLightContol->update(t, _pImmediateContext);
+    BillBoradObject->UpdatePositions(_pImmediateContext);
 }
 
 void Application::Draw()
 {
-    ID3D11ShaderResourceView* a;
-    ID3D11ShaderResourceView* b;
+    ID3D11ShaderResourceView* ResourceView1;
+    ID3D11ShaderResourceView* ResourceView2;
     // Setup the viewport
     D3D11_VIEWPORT vp;
     vp.Width = (FLOAT)_viewWidth;
@@ -695,11 +679,12 @@ void Application::Draw()
 
  ConstantBuffer cb1;
 
-
+    //move objects that will be shadowed into list 
     vector<DrawableGameObject*> GameObjects;
     GameObjects.push_back(&_GameObject);
     GameObjects.push_back(&_GameObjectFloor);
-    //Shadows
+
+    //creat Shadow depth senciles
     for (UINT i = 0; i < MAX_LIGHTS; i++)
     {
         _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
@@ -716,10 +701,11 @@ void Application::Draw()
 
 
     //render 3d objects
-    
-    RTT->SetRenderTarget(_pImmediateContext);
-    _pImmediateContext->PSSetSamplers(1, 1, &m_pPointrClamp);
-    _pImmediateContext->PSSetSamplers(2, 1, &m_pPointrClamp);
+    RenderTargetControl->GetRenderTarget("RTT")->SetRenderTarget(_pImmediateContext);
+
+    //set shadow samplers
+    _pImmediateContext->PSSetSamplers(1, 1, &m_pLINEARBORDER);
+    _pImmediateContext->PSSetSamplers(2, 1, &m_pLINEARBORDER);
 
     // get the game object world transform
      WorldAsFloat = _GameObject.GetTransfrom()->GetWorldMatrix();
@@ -737,6 +723,7 @@ void Application::Draw()
     cb1.mView = XMMatrixTranspose(RTTview);
     cb1.mProjection = XMMatrixTranspose(RTTprojection);
     cb1.vOutputColor = XMFLOAT4(0, 0, 0, 0);
+    cb1.camPos = XMFLOAT4(_pCamControll->GetCurentCam()->GetPosition().x, _pCamControll->GetCurentCam()->GetPosition().y, _pCamControll->GetCurentCam()->GetPosition().z,0.0f);
     _pImmediateContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, &cb1, 0, 0);
 
 
@@ -783,6 +770,11 @@ void Application::Draw()
     _GameObjectFloor.GetAppearance()->SetTextures(_pImmediateContext);
     _GameObjectFloor.draw(_pImmediateContext);
 
+
+
+    BillBoradObject->Draw(_pImmediateContext, _Shader->GetGeoShader(),&cb1, _pConstantBuffer);
+
+    _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
 
     //post 2d 
     if (isRTT) {
@@ -833,8 +825,8 @@ void Application::Draw()
         //_pImmediateContext->PSSetConstantBuffers(1, 1, &materialCB);
 
         //setTextures to buffer
-        a = RTT->GetTexture();
-        _pImmediateContext->PSSetShaderResources(0, 1, &a);
+        ResourceView1 = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
+        _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
 
 
@@ -848,6 +840,13 @@ void Application::Draw()
     }
     else
     {
+
+        _pImmediateContext->VSSetShader(_Shader->GetShaderByName("NoEffects")._pVertexShader, nullptr, 0);
+        _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+        _pImmediateContext->VSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+        _pImmediateContext->PSSetShader(_Shader->GetShaderByName("NoEffects")._pPixelShader, nullptr, 0);
+        _pImmediateContext->PSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+
         _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
 
@@ -858,7 +857,8 @@ void Application::Draw()
 
 
         //render 3d objects
-        Depth->SetRenderTarget(_pImmediateContext);
+        RenderTargetControl->GetRenderTarget("Depth")->SetRenderTarget(_pImmediateContext);
+       
        
      
 
@@ -928,15 +928,17 @@ void Application::Draw()
         _pImmediateContext->RSSetViewports(1, &vp2);
 
         
-        //first pass
+       
 
         UINT strides = sizeof(SCREEN_VERTEX);
         UINT offsets = 0;
         ID3D11Buffer* pBuffers[1] = { g_pScreenQuadVB };
 
+        //bloom alpha get
         if (&postSettings.UseBloom) {
             //bloom
-            alpha->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("alpha")->SetRenderTarget(_pImmediateContext);
+           
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Alpha")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -950,14 +952,14 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = RTT->GetTexture();
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            ResourceView1 = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
             _pImmediateContext->Draw(4, 0);
 
         }
         
-        
+        //blur passes
         if (postSettings.UseBlur || postSettings.UseBloom || postSettings.UseDepthOfF) {
             // Setup the viewport
             D3D11_VIEWPORT vp2;
@@ -970,7 +972,8 @@ void Application::Draw()
             _pImmediateContext->RSSetViewports(1, &vp2);
 
            //down sample
-            DownSample->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("DownSample")->SetRenderTarget(_pImmediateContext);
+            
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -984,18 +987,19 @@ void Application::Draw()
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
             if (postSettings.UseBloom) {
-                a = alpha->GetTexture();
+                ResourceView1 = RenderTargetControl->GetRenderTarget("alpha")->GetTexture();
             }
             else
             {
-                a = RTT->GetTexture();
+                ResourceView1 = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
             }
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
             _pImmediateContext->Draw(4, 0);
 
-            //blend 1
-            post1->SetRenderTarget(_pImmediateContext);
+            //blur 1
+            RenderTargetControl->GetRenderTarget("Gauss1")->SetRenderTarget(_pImmediateContext);
+          
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian1")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -1009,14 +1013,15 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-             a = DownSample->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("DownSample")->GetTexture();
 
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
             _pImmediateContext->Draw(4, 0);
 
-            //blend2
-            post2->SetRenderTarget(_pImmediateContext);
+            //blur 2
+            RenderTargetControl->GetRenderTarget("Gauss2")->SetRenderTarget(_pImmediateContext);
+      
 
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Gaussian2")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
@@ -1030,8 +1035,8 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = post1->GetTexture();
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            ResourceView1 = RenderTargetControl->GetRenderTarget("Gauss1")->GetTexture();
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
             _pImmediateContext->Draw(4, 0);
 
@@ -1046,7 +1051,8 @@ void Application::Draw()
             _pImmediateContext->RSSetViewports(1, &vp);
 
             //upsample
-            UpSample->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("UpSample")->SetRenderTarget(_pImmediateContext);
+            
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("SolidColour")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1060,21 +1066,22 @@ void Application::Draw()
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
             
-                a = post2->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("Gauss2")->GetTexture();
             
             
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
 
             _pImmediateContext->Draw(4, 0);
         }
 
 
        
-        ID3D11ShaderResourceView* c;
+        ID3D11ShaderResourceView* ResourceView3;
 
         if (postSettings.UseDepthOfF) {
             //DOF implmentation
-            DepthOfField->SetRenderTarget(_pImmediateContext);
+            RenderTargetControl->GetRenderTarget("DepthOfField")->SetRenderTarget(_pImmediateContext);
+           
             _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("DepthOfField")._pVertexLayout);
             _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
             _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1084,13 +1091,13 @@ void Application::Draw()
             _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
             _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
-            a = RTT->GetTexture();
-            b = UpSample->GetTexture();
-            c = Depth->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
+            ResourceView2 = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
+            ResourceView3 = RenderTargetControl->GetRenderTarget("Depth")->GetTexture();
 
-            _pImmediateContext->PSSetShaderResources(0, 1, &a);
-            _pImmediateContext->PSSetShaderResources(1, 1, &b);
-            _pImmediateContext->PSSetShaderResources(2, 1, &c);
+            _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
+            _pImmediateContext->PSSetShaderResources(1, 1, &ResourceView2);
+            _pImmediateContext->PSSetShaderResources(2, 1, &ResourceView3);
             _pImmediateContext->Draw(4, 0);
 
         }
@@ -1098,7 +1105,8 @@ void Application::Draw()
 
 
         //fade implmentation
-        Fade->SetRenderTarget(_pImmediateContext);
+        RenderTargetControl->GetRenderTarget("Fade")->SetRenderTarget(_pImmediateContext);
+        
         _pImmediateContext->IASetInputLayout(_Shader->GetFullScreenShaderByName("Fade")._pVertexLayout);
         _pImmediateContext->PSSetSamplers(0, 1, &m_pPointrLinear);
         _pImmediateContext->IASetVertexBuffers(0, 1, pBuffers, &strides, &offsets);
@@ -1109,15 +1117,15 @@ void Application::Draw()
         _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
 
         if (postSettings.UseBlur) {
-            a = UpSample->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
         }
         else if (postSettings.UseDepthOfF) {
-            a = DepthOfField->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("DepthOfField")->GetTexture();
         }
         else {
-            a = RTT->GetTexture();
+            ResourceView1 = RenderTargetControl->GetRenderTarget("RTT")->GetTexture();
         }
-        _pImmediateContext->PSSetShaderResources(0, 1, &a);
+        _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
         _pImmediateContext->Draw(4, 0);
 
 
@@ -1136,16 +1144,16 @@ void Application::Draw()
       
     
        
-        a = Fade->GetTexture();
-        b = UpSample->GetTexture();
+        ResourceView1 = RenderTargetControl->GetRenderTarget("Fade")->GetTexture();
+        ResourceView2 = RenderTargetControl->GetRenderTarget("UpSample")->GetTexture();
         
 
 
        
         _pImmediateContext->UpdateSubresource(_pPostProcessingConstantBuffer, 0, nullptr, &postSettings, 0, 0);
         _pImmediateContext->PSSetConstantBuffers(0, 1, &_pPostProcessingConstantBuffer);
-        _pImmediateContext->PSSetShaderResources(0, 1, &a);
-        _pImmediateContext->PSSetShaderResources(1, 1, &b);
+        _pImmediateContext->PSSetShaderResources(0, 1, &ResourceView1);
+        _pImmediateContext->PSSetShaderResources(1, 1, &ResourceView2);
         _pImmediateContext->Draw(4, 0);
     }
 
@@ -1156,7 +1164,7 @@ void Application::Draw()
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
     DimGuiManager->ShaderMenu(_Shader,&postSettings,isRTT);
-
+    DimGuiManager->BillBoradControl(BillBoradObject);
     DimGuiManager->EndRender();
 
     // Present our back buffer to our front buffer
@@ -1205,7 +1213,8 @@ void Application::setupLightForRender()
 void Application::Cleanup()
 {
         _GameObject.cleanup();
-    
+        _GameObjectFloor.cleanup();
+
         delete _controll;
         _controll = nullptr;
         
@@ -1221,9 +1230,13 @@ void Application::Cleanup()
         delete _Shader;
         _Shader = nullptr;
 
+        delete RenderTargetControl;
+        RenderTargetControl = nullptr;
 
-     
-
+        delete BillBoradObject;
+        BillBoradObject = nullptr;
+        delete DepthLight;
+        DepthLight = nullptr;
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };
@@ -1236,10 +1249,10 @@ void Application::Cleanup()
     
         if (_pLightConstantBuffer)
             _pLightConstantBuffer->Release();
-        if (_pVertexLayout) _pVertexLayout->Release();
+      
         if( _pConstantBuffer ) _pConstantBuffer->Release();
-        if( _pVertexShader ) _pVertexShader->Release();
-        if( _pPixelShader ) _pPixelShader->Release();
+        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+
         if( _pDepthStencil ) _pDepthStencil->Release();
         if( _pDepthStencilView ) _pDepthStencilView->Release();
         if( _pRenderTargetView ) _pRenderTargetView->Release();
@@ -1249,11 +1262,10 @@ void Application::Cleanup()
         if( _pImmediateContext ) _pImmediateContext->Release();
     
     
-        //RTT Remove
-        
         if (g_pScreenQuadVB) g_pScreenQuadVB->Release();
         if (m_pPointrLinear) m_pPointrLinear->Release();
-        if (_pPostProcessingConstantBuffer)_pPostProcessingConstantBuffer->Release();
+        if (m_pPointrLinear) m_pLINEARBORDER->Release();
+       
 
         ID3D11Debug* debugDevice = nullptr;
         _pd3dDevice->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debugDevice));
@@ -1275,8 +1287,4 @@ bool Application::InputControll(MSG msg)
     return false;
 }
 
-
-//TODO: add shdow mapping
-//TODO: Deffered rendring
-//TODO: Gemoratry shader
 

@@ -7,6 +7,9 @@
 #include"Camera.h"
 #include"ShadowMap.h"
 using namespace DirectX;
+/// <summary>
+/// controlls a single lights data
+/// </summary>
 class Light_Data
 {
 public:
