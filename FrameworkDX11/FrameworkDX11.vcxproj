@@ -435,6 +435,7 @@
     <Image Include="Resources\stone.dds" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="ClassDiagram.cd" />
     <None Include="SolidColour.fx">
       <FileType>Document</FileType>
     </None>

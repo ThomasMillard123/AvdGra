@@ -320,5 +320,6 @@
     <None Include="BillBord.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>
