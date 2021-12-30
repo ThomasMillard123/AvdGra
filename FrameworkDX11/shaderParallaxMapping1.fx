@@ -121,12 +121,12 @@ float3 VectorToTangentSpace(float3 vectorV,float3x3 TBN_inv)
 float2 SimpleParallax(float2 texCoord, float3 toEye)
 {
 	
+	//get hight
 	float height = txParallax.Sample(samLinear, texCoord).r;
-	//assumed that scaled height = -biased height -> h * s + b = h * s - s = s(h - 1)
-	//because in presentation it states that reasonable scale value = 0.02, and bias = [-0.01, -0.02]
+	//biais and scale height
 	float heightSB = Material.HightScale * (height - 1.0);
-
-	float2 parallax = toEye.xy * heightSB;
+	//creat new UV
+	float2 parallax = viewDir.xy * heightSB;
 
 	return (texCoord + parallax);
 }

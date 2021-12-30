@@ -19,10 +19,12 @@ void BillboardObject::CreatBillboard(int Number, ID3D11Device* _pd3dDevice)
     
     NumberOfBillBoards = Number;
 
+    //creats 2 start points
     Positions.resize(NumberOfBillBoards);
     Positions[0].Pos = XMFLOAT3(0, 0, 0);
     Positions[1].Pos = XMFLOAT3(0, 10, 0);
 
+    //creat instance buffer at the size of how many instances there will be 
     D3D11_BUFFER_DESC instBuffDesc;
     ZeroMemory(&instBuffDesc, sizeof(instBuffDesc));
 
@@ -43,9 +45,7 @@ void BillboardObject::CreatBillboard(int Number, ID3D11Device* _pd3dDevice)
 
 
 
-    // Create the vertex buffer we will send to the shaders for the billboard data. We are going to use
-    // the instancing technique for the billboards, and our billboard geometry shader only requires a single
-    // point to be an input, so all we need to do is create a buffer that stores a single point!
+    // Create the vertex buffer
     D3D11_BUFFER_DESC billboardBufferDesc;
     ZeroMemory(&billboardBufferDesc, sizeof(billboardBufferDesc));
 
@@ -56,12 +56,11 @@ void BillboardObject::CreatBillboard(int Number, ID3D11Device* _pd3dDevice)
     billboardBufferDesc.MiscFlags = 0;
 
     D3D11_SUBRESOURCE_DATA ginitData;
+    //vertex data that would be used for all items
+    SimpleVertexBill sharedData;
+    sharedData.Pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-    // Create a single vertex at the point 0,0,0. None of the other members will be used for billboarding
-    SimpleVertexBill gv;
-    gv.Pos = XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-    ginitData.pSysMem = &gv;
+    ginitData.pSysMem = &sharedData;
     _pd3dDevice->CreateBuffer(&billboardBufferDesc, &ginitData, &BillboardVertBuff);
 }
 
@@ -69,18 +68,21 @@ void BillboardObject::Draw(ID3D11DeviceContext* pContext, ShaderData Shader, Con
 {
     pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
     pContext->IASetInputLayout(Shader._pVertexLayout);
+    
     UINT strides[2] = { sizeof(SimpleVertexBill), sizeof(SimpleVertexBill) };
     UINT offsets[2] = { 0, 0 };
     
     cb->mWorld = XMMatrixIdentity();
     pContext->UpdateSubresource(_pConstantBuffer, 0, nullptr, cb, 0, 0);
 
+    //Load vertex vuffers
     ID3D11Buffer* vertBillInstBuffers[2] = { BillboardVertBuff, BillboardInstanceBuff };
     pContext->IASetVertexBuffers(0, 2, vertBillInstBuffers, strides, offsets);
 
-    
+    //set shader
     pContext->VSSetShader(Shader._pVertexShader, nullptr, 0);
     pContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
+    //geomatry shader to creat the plane of the billboard
     pContext->GSSetShader(Shader._pGeometryShader, nullptr, 0);
     pContext->GSSetConstantBuffers(0, 1, &_pConstantBuffer);
     pContext->PSSetShaderResources(0, 1, &m_pDiffuseResourceView);
@@ -95,6 +97,7 @@ void BillboardObject::Draw(ID3D11DeviceContext* pContext, ShaderData Shader, Con
 
 void BillboardObject::SetTexture(string TexName, ID3D11Device* _pd3dDevice)
 {
+    //set textuer of billborad objects
     wstring tex = std::wstring(TexName.begin(), TexName.end());
     const wchar_t* widecstr = tex.c_str();
     HRESULT hr = CreateDDSTextureFromFile(_pd3dDevice, widecstr, nullptr, &m_pDiffuseResourceView);
@@ -104,6 +107,7 @@ void BillboardObject::SetTexture(string TexName, ID3D11Device* _pd3dDevice)
 
 void BillboardObject::UpdatePositions(ID3D11DeviceContext* pContext)
 {
+    //update the textures 
     pContext->UpdateSubresource(BillboardInstanceBuff, 0, NULL, &Positions[0], 0, 0);
 }
 

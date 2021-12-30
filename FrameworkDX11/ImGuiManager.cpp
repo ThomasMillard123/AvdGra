@@ -36,7 +36,7 @@ void ImGuiManager::EndRender()
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
-
+//cam controll menu
 static const char* current_item = NULL;
 static string name;
 static bool Load = false;
@@ -87,6 +87,7 @@ void ImGuiManager::DrawCamMenu(CameraController* Cams)
     ImGui::End();
 }
 
+//post processing and shader controll menus
 static const char* current_Shader = NULL;
 static string Shadername;
 static bool LoadShader = false;
@@ -178,7 +179,7 @@ void ImGuiManager::ShaderMenu(ShaderController* Shader, PostProcessingCB* postSe
 }
 
 
-
+//objec control menue
 static float rotationX, rotationY , rotationZ;
 static float pos[]= { 0.0f,0.0f,0.0f };
 void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
@@ -258,7 +259,7 @@ void ImGuiManager::ObjectControl(DrawableGameObject* GameObject)
     ImGui::End();
 }
 
-
+//light control menu
 static const char* current_item1 = NULL;
 static string name1;
 static bool Load2 = false;
@@ -374,7 +375,7 @@ void ImGuiManager::LightControl(LightControll* LightControl)
 }
 
 
-
+//billboard controll menu
 static const char* current_item_Bill= NULL;
 static string nameBill;
 //static bool Load2 = false;

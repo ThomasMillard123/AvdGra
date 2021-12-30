@@ -173,7 +173,7 @@ void Light_Data::SetAngle(float Angle)
 
 void Light_Data::CreateShdowMap(ID3D11DeviceContext* pContext, vector<DrawableGameObject*> Objects,ID3D11Buffer** _pConstantBuffer)
 {
-	Shadow->BindDsvAndSetNullRenderTarget(pContext);
+	Shadow->SetShadowMap(pContext);
 
 	ConstantBuffer cb1;
 	cb1.mView = GetLightData().mView;

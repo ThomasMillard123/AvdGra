@@ -3,6 +3,11 @@
 
 #include"Light.h"
 #include<vector>
+
+/// <summary>
+/// manages the lights in the appliaction
+/// </summary>
+
 class LightControll
 {
 

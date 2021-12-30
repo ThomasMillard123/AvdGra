@@ -6,7 +6,9 @@
 #include<string>
 #include<cassert>
 using namespace std;
-
+/// <summary>
+/// storage for a shader's data
+/// </summary>
 struct ShaderData
 {
 	string Name;
@@ -52,40 +54,51 @@ struct ShaderData
 
 
 
-
+/// <summary>
+/// controlls all the shaders in the appliaction
+/// </summary>
 class ShaderController
 {
 public:
 	ShaderController();
 	~ShaderController();
-
+	//creat shader
 	HRESULT NewShader(string Name,const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
+	HRESULT NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
+	HRESULT NewGeoShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
 
+	//get shader
 	vector<ShaderData> GetShaderList() { return _ShaderData; }
 	ShaderData GetShaderData();
-	void SetShaderData(UINT ShaderSet);
 	ShaderData GetShaderByName(string Name);
 
-	HRESULT NewFullScreenShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
 	vector<ShaderData> GetFSShaderList() { return _FullScreenShaderData; }
 	ShaderData GetFullScreenShaderByName(string Name);
 	ShaderData GetFullScreenShaderByNumber(int No);
 
-
-	HRESULT NewGeoShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
 	ShaderData GetGeoShader() { return GeoShader; }
-private:
+	//set shader
+	void SetShaderData(UINT ShaderSet);
+	
+	
 
+
+	
+	
+private:
+	//shaders 
 	vector<ShaderData>_ShaderData;
 	vector<ShaderData>_FullScreenShaderData;
 	ShaderData GeoShader;
 	UINT CurrentShader;
 	
-	
+	//Load shader flies
 	HRESULT CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
+	//creat shader data
 	HRESULT NewVertexShader(const WCHAR* szFileName,  ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext,bool instanced);
 	HRESULT NewPixleShader(const WCHAR* szFileName, ID3D11Device* _pd3dDevice);
 	HRESULT NewGeometryShader(const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext);
+
 	void CleanUp();
 
 	ID3D11VertexShader* _pVertexShader = nullptr;

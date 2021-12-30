@@ -65,7 +65,7 @@ float4 QuadPS(QuadVS_Output Input) : SV_TARGET
     
   
 
-   //smoth between bluer immage and non bluered immage
+   //blend between bluer immage and non bluered immage
     Colour= lerp(vColor, blurTex, saturate(zDepth) * blerAttenuation);
     
     return Colour;

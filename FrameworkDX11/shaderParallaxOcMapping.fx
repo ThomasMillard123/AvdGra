@@ -120,6 +120,7 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 	return tangentSpaceNormal;
 }
 
+//parrallax occlusion 
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
 
@@ -414,7 +415,7 @@ PS_INPUT VS(VS_INPUT input)
 
 float4 PS(PS_INPUT IN) : SV_TARGET
 {
-
+	//new uvs useing parallax occlusion mapping
 	float2 parallaxTexCoords = Parallax(IN.Tex, IN.eyeVectorTS,IN.NormTS);
 
 	if (parallaxTexCoords.x > 1.0 || parallaxTexCoords.y > 1.0 || parallaxTexCoords.x < 0.0 || parallaxTexCoords.y < 0.0)

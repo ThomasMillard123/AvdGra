@@ -10,7 +10,6 @@
 #include <iostream>
 #include <vector>
 
-#include "Camera.h"
 #include "InputControllor.h"
 #include "DDSTextureLoader.h"
 #include "resource.h"
@@ -18,7 +17,7 @@
 #include "structures.h"
 
 #include"CameraController.h"
-#include"Camera.h"
+
 
 #include"ImGuiManager.h"
 
@@ -70,7 +69,7 @@ private:
 	ID3D11Buffer* g_pScreenQuadVB = nullptr;
 	
 	ID3D11SamplerState* m_pPointrLinear;
-	ID3D11SamplerState* m_pPointrClamp;
+	ID3D11SamplerState* m_pLINEARBORDER;
 
 	
 	ShadowMap* DepthLight;
@@ -126,7 +125,7 @@ private:
 	HRESULT		InitMesh();
 	HRESULT		InitWorld(int width, int height);
 
-	HRESULT CompileShaderFromFile(const WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut);
+	
 
 };
 

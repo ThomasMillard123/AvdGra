@@ -22,6 +22,7 @@ enum MouseEventType
 		};
 /// <summary>
 /// class to hold the mouse data
+/// created from https://github.com/ThomasMillard123/FGAGC
 /// </summary>
 class MouseEvent
 {

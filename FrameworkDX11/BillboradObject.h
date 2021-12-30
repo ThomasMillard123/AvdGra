@@ -13,7 +13,7 @@
 using namespace DirectX;
 using namespace std;
 
-
+//vetex data that would be used to creat billboard
 struct SimpleVertexBill
 {
 	XMFLOAT3 Pos;
@@ -23,7 +23,9 @@ struct SimpleVertexBill
 	XMFLOAT3 biTangent;
 };
 
-
+/// <summary>
+/// controlls a set of instances of a billboard use a gemory shader to draw the vertex data
+/// </summary>
 class BillboardObject
 {
 

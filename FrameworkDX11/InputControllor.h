@@ -20,6 +20,7 @@ using namespace DirectX;
 
 /// <summary>
 /// Class to hold all inputs need by application
+/// created from https://github.com/ThomasMillard123/FGAGC
 /// </summary>
 class InputControllor
 {

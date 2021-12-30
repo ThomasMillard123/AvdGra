@@ -50,7 +50,7 @@ ID3D11ShaderResourceView* ShadowMap::DepthMapSRV()
 	return mDepthMapSRV;
 }
 
-void ShadowMap::BindDsvAndSetNullRenderTarget(ID3D11DeviceContext* dc)
+void ShadowMap::SetShadowMap(ID3D11DeviceContext* dc)
 {
 	ID3D11RenderTargetView* renderTargets[1] = { 0 };
 	dc->OMSetRenderTargets(1, renderTargets, mDepthMapDSV);

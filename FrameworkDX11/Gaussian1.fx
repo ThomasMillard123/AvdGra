@@ -111,7 +111,7 @@ float4 QuadPS(QuadVS_Output Input) : SV_TARGET
           vColor += tex.Sample(PointSampler, Input.texCoord8) * weight3;
           vColor += tex.Sample(PointSampler, Input.texCoord9) * weight4;
 
-          //vColor.a = 1.0f;
+          
       
      
 

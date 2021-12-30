@@ -12,6 +12,7 @@ using namespace DirectX;
 /// Camera Class: 
 /// updates the camera
 /// moves and rotates the camera
+/// created from https://github.com/ThomasMillard123/FGAGC
 /// </summary>
 class Camera
 {

@@ -133,7 +133,7 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 
 	};
 
-
+	//shared vertexes 
 	//// Create vertex buffer
 	//SimpleVertex vertices[] =
 	//{
@@ -168,7 +168,7 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	//	{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f), XMFLOAT2(1.0f, 0.0f) },
 	//};
 
-
+	//cacluate binormal and tangent
 	CalculateModelVectors(vertices, NUM_VERTICES);
 
 	D3D11_BUFFER_DESC bd = {};
@@ -291,7 +291,7 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 
 	return hr;
 }
-
+//create plane for floor
 HRESULT Appearance::initMeshFloor(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pContext, UINT Width,UINT Hight)
 {
 

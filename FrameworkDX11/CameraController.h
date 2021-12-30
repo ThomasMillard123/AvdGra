@@ -4,6 +4,9 @@
 #include "Camera.h"
 
 using namespace std;
+/// <summary>
+/// manages the camreas in the appliaction
+/// </summary>
 class CameraController
 {
 public:
@@ -30,5 +33,6 @@ private:
 	vector<Camera*> CamList;
 	int _CurrentCamNumber;
 
+	void CleanUp();
 };
 

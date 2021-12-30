@@ -85,7 +85,9 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 {
 
 	float4 texColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+	//caluate depth 
 	float depth = IN.depthPos.z / IN.depthPos.w;
+	//return depth values
 	texColor = float4(depth, depth, depth, 1.0f);
 
 	return texColor;

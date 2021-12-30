@@ -13,7 +13,9 @@ class DrawableGameObject;
 class LightControll;
 class ShaderController;
 class BillboardObject;
-
+/// <summary>
+/// controlls the DImGui that controll parts of the application
+/// </summary>
 class ImGuiManager
 {
 public:

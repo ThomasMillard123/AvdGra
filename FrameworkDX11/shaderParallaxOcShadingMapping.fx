@@ -120,6 +120,7 @@ float3 VectorToTangentSpace(float3 vectorV, float3x3 TBN_inv)
 	return tangentSpaceNormal;
 }
 
+//parrallax occlusion 
 float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 {
 	//caluate the max of the amout of movement 
@@ -171,6 +172,7 @@ float2 Parallax(float2 texCoord, float3 toEye, float3 Normal)
 	return FinalTexCoords;
 
 }
+//parrallax shadows 
 float ParallaxSelfShadowing(float3 toLight, float2 texCoord, float3 Normal)
 {
 	float ShadowFactor = 1;

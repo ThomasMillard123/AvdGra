@@ -8,6 +8,7 @@ ShaderController::ShaderController()
 
 ShaderController::~ShaderController()
 {
+    CleanUp();
 }
 
 HRESULT ShaderController::NewShader(string Name,const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
@@ -295,11 +296,17 @@ void ShaderController::CleanUp()
          Shader.CleanUp();
      }
 
+
+     g_pQuadLayout = nullptr;
+     g_pQuadVS = nullptr;
+     g_pQuadPS = nullptr;
+
      for (auto Shader : _FullScreenShaderData) {
 
          Shader.CleanUp();
      }
 
+     GeoShader.CleanUp();
 }
 
 

@@ -7,7 +7,7 @@ CameraController::CameraController()
 
 CameraController::~CameraController()
 {
-	RemoveAllCam();
+	CleanUp();
 }
 
 void CameraController::AddCam(Camera* cam)
@@ -77,4 +77,10 @@ void CameraController::Update()
 
 
 
+}
+
+void CameraController::CleanUp()
+{
+	RemoveAllCam();
+	_CurrentCamNumber = 0;
 }
