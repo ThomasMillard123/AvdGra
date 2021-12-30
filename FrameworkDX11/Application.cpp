@@ -115,12 +115,7 @@ Application::Application() {
     _pConstantBuffer = nullptr;
     _pLightConstantBuffer = nullptr;
 
-   /* CCWcullMode = nullptr;
-    CWcullMode = nullptr;
-    DSLessEqual = nullptr;
-    RSCullNone = nullptr;
-    _WindowHeight = 0;
-    _WindowWidth = 0;*/
+
 
     DimGuiManager = new ImGuiManager();
 

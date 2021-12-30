@@ -126,9 +126,10 @@ float2 SimpleParallax(float2 texCoord, float3 toEye)
 	//biais and scale height
 	float heightSB = Material.HightScale * (height - 1.0);
 	//creat new UV
-	float2 parallax = viewDir.xy * heightSB;
+	float2 parallax = toEye.xy * heightSB;
 
 	return (texCoord + parallax);
+	
 }
 
 
