@@ -134,3 +134,26 @@ struct PostProcessingCB
 	int pad1;
 	int pad2;
 };
+
+
+struct TerrainCB
+{
+	DirectX::XMFLOAT4   gEyePosition;
+	//----------------------------------- (16 byte boundary)
+	float MinDist;
+	float MaxDist;
+	float MinTess;
+	float MaxTess;
+	//----------------------------------- (16 byte boundary)
+	float Layer1MaxHight;
+	float Layer2MaxHight;
+	float Layer3MaxHight;
+	float Layer4MaxHight;
+	//----------------------------------- (16 byte boundary)
+	float Layer5MaxHight;
+	float pad1;
+	float pad2;
+	float pad3;
+	//----------------------------------- (16 byte boundary)
+	XMFLOAT4 WorldFrustumPlanes[6];
+};  // Total:                                  672 bytes (42 * 16)

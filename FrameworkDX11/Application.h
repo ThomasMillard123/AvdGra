@@ -27,6 +27,12 @@
 #include"RenderTargetTextureClass.h"
 #include"BillboradObject.h"
 #include"RenderTargetControll.h"
+#include"Terrain.h"
+
+#include"RansterStateManager.h"
+
+#include"TerrainVoxel.h"
+#include"AnimatedModel.h"
 using namespace std;
 
 class Application
@@ -45,8 +51,9 @@ private:
 	ID3D11RenderTargetView* _pRenderTargetView ;
 	ID3D11Texture2D* _pDepthStencil = nullptr;
 	ID3D11DepthStencilView* _pDepthStencilView = nullptr;
-	
-
+	RasterStateManager* RSControll;
+	ID3D11RasterizerState* RSCullNone;
+	ID3D11RasterizerState* Wirer;
 	ID3D11Buffer* _pConstantBuffer ;
 
 	ID3D11Buffer* _pLightConstantBuffer;
@@ -88,7 +95,8 @@ private:
 
 	DrawableGameObject		_GameObject;
 	DrawableGameObject		_GameObjectFloor;
-
+	Terrain* _Terrain;
+	TerrainVoxel* _VoxelTerrain;
 	InputControllor* _controll;
 	ShaderController* _Shader;
 	CameraController* _pCamControll;
@@ -97,7 +105,7 @@ private:
 
 	Camera* _Camrea;
 
-
+	AnimatedModel* AnimmationObject;
 	
 
 public:

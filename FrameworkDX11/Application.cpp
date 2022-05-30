@@ -1,5 +1,6 @@
 #include "Application.h"
 
+#include"M3dLoader.h"
 Application* app;
 LRESULT CALLBACK WindProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
 
@@ -299,6 +300,25 @@ HRESULT Application::InitMesh()
 
     _GameObjectFloor.GetTransfrom()->SetPosition(-5, -2, 5);
 
+    //Terrain Genration
+    _Terrain = new Terrain("Textures513\\coastMountain513.raw",XMFLOAT2(513,513),100,TerrainGenType::HightMapLoad ,_pd3dDevice, _pImmediateContext, _Shader);
+
+    vector<string> texGround;
+    texGround.push_back("Textures513/grass.dds");
+    texGround.push_back("Textures513/darkdirt.dds");
+    texGround.push_back("Textures513/lightdirt.dds");
+    texGround.push_back("Textures513/stone.dds");
+    texGround.push_back("Textures513/snow.dds");
+
+    _Terrain->SetTex(texGround, _pd3dDevice);
+    _Terrain->SetBlendMap("Textures513/blend.dds", _pd3dDevice);
+
+    _VoxelTerrain = new TerrainVoxel(_pd3dDevice, _pImmediateContext, _Shader,3,3);
+
+
+    AnimmationObject = new AnimatedModel("AnimationModel/soldier.m3d", _pd3dDevice, _pImmediateContext, _Shader);
+
+
 
     // Create the constant buffer
     D3D11_BUFFER_DESC bd = {};
@@ -346,6 +366,38 @@ HRESULT Application::InitMesh()
 
     return hr;
 }
+vector<float> CubicBezierBasis(float u) {
+    float compla = 1 - u;	// complement of u
+    // compute value of basis functions for given value of u
+    float BF0 = compla * compla * compla;
+    float BF1 = 3.0 * u * compla * compla;
+    float BF2 = 3.0 * u * u * compla;
+    float BF3 = u * u * u;
+    
+    vector<float> bfArray = { BF0, BF1, BF2, BF3 };
+
+    return bfArray;
+
+}
+vector<XMFLOAT3> CubicBezierCurve(vector<XMFLOAT3> controlPoints) {
+    vector<XMFLOAT3> Points;
+    for (float i = 0.0f; i < 1.0f; i += 0.1f) {
+        // Calculate value of each basis function for current u
+        vector<float> basisFnValues = CubicBezierBasis(i);
+
+        XMFLOAT3 sum = XMFLOAT3{0.0f,0.0f,0.0f};
+        for (int cPointIndex = 0; cPointIndex <= 3; cPointIndex++) {
+            // Calculate weighted sum (weightx * CPx)
+            sum.x += controlPoints[cPointIndex].x * basisFnValues[cPointIndex];
+            sum.y += controlPoints[cPointIndex].y * basisFnValues[cPointIndex];
+            sum.z += controlPoints[cPointIndex].z * basisFnValues[cPointIndex];
+        }
+
+        DirectX::XMFLOAT3 point = sum;	// point for current u on cubic Bezier curve
+        Points.push_back(point);
+    }
+    return Points;
+}
 
 HRESULT Application::InitWorld(int width, int height)
 {
@@ -357,7 +409,9 @@ HRESULT Application::InitWorld(int width, int height)
     _Camrea = new Camera(XMFLOAT3(0.0f, 0, -5), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height, 0.01f, 100.0f);
     _Camrea->SetCamName("Free Cam");
     _pCamControll->AddCam(_Camrea);
-
+    _Camrea = new Camera(XMFLOAT3(0.0f, 0, -5), XMFLOAT3(0.0f, 0.0f, 0.0f), XMFLOAT3(0.0f, 1.0f, 0.0f), width, height, 0.01f, 50.0f);
+    _Camrea->SetCamName("Diss Cam");
+    _pCamControll->AddCam(_Camrea);
     _controll->AddCam(_pCamControll);
 
     //postSettings
@@ -401,7 +455,12 @@ HRESULT Application::InitWorld(int width, int height)
     HRESULT hr = _pd3dDevice->CreateBuffer(&bd, &InitData, &g_pScreenQuadVB);
     if (FAILED(hr))
         return hr;
+    vector<XMFLOAT3> a = { XMFLOAT3{0.0f,0.0f,0.0f},XMFLOAT3{2.0f,1.0f,0.0f},XMFLOAT3{5.0f,0.6f,0.0f},XMFLOAT3{6.0f,0.0f,0.0f} };
+    DimGuiManager->points= CubicBezierCurve(a);
+   
 
+
+    
 
     return S_OK;
 }
@@ -611,8 +670,25 @@ HRESULT Application::InitDevice()
 
     DepthLight= new ShadowMap(_pd3dDevice, width, height);
   
+    RSControll = new RasterStateManager();
+
+    D3D11_RASTERIZER_DESC cmdesc;
+    ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+    cmdesc.FillMode = D3D11_FILL_SOLID;
+    cmdesc.CullMode = D3D11_CULL_BACK;
+    RSControll->CreatRasterizerState(_pd3dDevice, cmdesc, "RSCullBack");
+  
+    ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+    cmdesc.FillMode = D3D11_FILL_WIREFRAME;
+    cmdesc.CullMode = D3D11_CULL_BACK;
+    RSControll->CreatRasterizerState(_pd3dDevice, cmdesc, "RWireframe");
 
 
+
+    ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+    cmdesc.FillMode = D3D11_FILL_SOLID;
+    cmdesc.CullMode = D3D11_CULL_NONE;
+    RSControll->CreatRasterizerState(_pd3dDevice, cmdesc, "RSCullNone");
 
     hr = InitMesh();
     if (FAILED(hr))
@@ -645,12 +721,15 @@ void Application::Update()
         return;
     
     _controll->Update();
-    _pCamControll->Update();
+    _pCamControll->Update(); 
+    _Terrain->Update();
     // Update the cube transform, material etc. 
     _GameObject.update(t, _pImmediateContext);
     _GameObjectFloor.update(t, _pImmediateContext);
     _pLightContol->update(t, _pImmediateContext);
     BillBoradObject->UpdatePositions(_pImmediateContext);
+
+    AnimmationObject->Update(t);
 }
 
 void Application::Draw()
@@ -701,6 +780,7 @@ void Application::Draw()
 
 
     //render 3d objects
+    RSControll->SetRasterizerState(_pImmediateContext);
     RenderTargetControl->GetRenderTarget("RTT")->SetRenderTarget(_pImmediateContext);
 
     //set shadow samplers
@@ -716,7 +796,7 @@ void Application::Draw()
 
      RTTview = XMLoadFloat4x4(&viewAsFloats);
      RTTprojection = XMLoadFloat4x4(&projectionAsFloats);
-
+     XMMATRIX viewProject=RTTview* RTTprojection;
     // store this and the view / projection in a constant buffer for the vertex shader to use
     //ConstantBuffer cb1;
     cb1.mWorld = XMMatrixTranspose(mGO);
@@ -755,6 +835,10 @@ void Application::Draw()
     _GameObject.GetAppearance()->SetTextures(_pImmediateContext);
     _GameObject.draw(_pImmediateContext);
 
+     RSControll->SetRasterizerState("RSCullNone", _pImmediateContext);
+     AnimmationObject->Draw(_pImmediateContext, _Shader, &cb1, _pConstantBuffer);
+     RSControll->SetRasterizerState(_pImmediateContext);
+   
 
     _pImmediateContext->VSSetShader(_Shader->GetShaderByName("NoEffects")._pVertexShader, nullptr, 0);
     _pImmediateContext->VSSetConstantBuffers(0, 1, &_pConstantBuffer);
@@ -770,12 +854,20 @@ void Application::Draw()
     _GameObjectFloor.GetAppearance()->SetTextures(_pImmediateContext);
     _GameObjectFloor.draw(_pImmediateContext);
 
+    //terrain draw
+     _VoxelTerrain->Draw(_pImmediateContext, _Shader, &cb1, _pConstantBuffer, _pCamControll);
+    _Terrain->Draw(_pImmediateContext, _Shader, &cb1, _pConstantBuffer, _pCamControll);
 
 
+    _pImmediateContext->HSSetConstantBuffers(2, 1, &_pLightConstantBuffer);
+    
+    
     BillBoradObject->Draw(_pImmediateContext, _Shader->GetGeoShader(),&cb1, _pConstantBuffer);
 
+  
     _pImmediateContext->IASetInputLayout(_Shader->GetShaderData()._pVertexLayout);
 
+    
     //post 2d 
     if (isRTT) {
         //RTT to cube or screen like a tv
@@ -849,7 +941,7 @@ void Application::Draw()
 
         _pLightContol->draw(_pImmediateContext, _pConstantBuffer, &cb1);
 
-
+        RSControll->SetRasterizerState("RSCullBack",_pImmediateContext);
 
         //deapth find
 //----------------------------------------------------------------------------------------------------------------------------
@@ -1163,8 +1255,11 @@ void Application::Draw()
     DimGuiManager->DrawCamMenu(_pCamControll);
     DimGuiManager->ObjectControl(&_GameObject);
     DimGuiManager->LightControl(_pLightContol);
-    DimGuiManager->ShaderMenu(_Shader,&postSettings,isRTT);
+    DimGuiManager->ShaderMenu(_Shader,&postSettings,RSControll, isRTT);
     DimGuiManager->BillBoradControl(BillBoradObject);
+    DimGuiManager->BezierCurveSpline();
+    DimGuiManager->TerrainControll(_Terrain,_VoxelTerrain,_pd3dDevice,_pImmediateContext);
+    DimGuiManager->AnimationControll(AnimmationObject);
     DimGuiManager->EndRender();
 
     // Present our back buffer to our front buffer
@@ -1201,7 +1296,7 @@ float Application::calculateDeltaTime()
 
 void Application::setupLightForRender()
 {
- 
+        
         LightPropertiesConstantBuffer lightProperties;
         lightProperties.EyePosition = _pCamControll->GetCam(0)->GetPositionFloat4();
         lightProperties.Lights[0] = _pLightContol->GetLight(0)->GetLightData();
@@ -1237,6 +1332,18 @@ void Application::Cleanup()
         BillBoradObject = nullptr;
         delete DepthLight;
         DepthLight = nullptr;
+
+
+        delete _Terrain;
+        _Terrain = nullptr;
+
+
+        delete _VoxelTerrain;
+        _VoxelTerrain = nullptr;
+
+
+        delete AnimmationObject;
+        AnimmationObject = nullptr;
 
         // Remove any bound render target or depth/stencil buffer
         ID3D11RenderTargetView* nullViews[] = { nullptr };

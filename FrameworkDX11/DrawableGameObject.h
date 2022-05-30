@@ -34,7 +34,7 @@ public:
 
 
 
-private:
+protected:
 
 	Transform* _pTransform;
 	Appearance* _pApperance;

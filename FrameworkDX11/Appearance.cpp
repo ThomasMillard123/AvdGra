@@ -40,6 +40,17 @@ void Appearance::Draw(ID3D11DeviceContext* pImmediateContext)
 	pImmediateContext->DrawIndexed(NumberOfVert, 0, 0);
 }
 
+void Appearance::Draw(ID3D11DeviceContext* pImmediateContext, int vertToDraw, int Start)
+{
+	UINT stride = mVertexStride;
+	UINT offset = 0;
+	pImmediateContext->IASetVertexBuffers(0, 1, &m_pVertexBuffer, &stride, &offset);
+	pImmediateContext->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R16_UINT, 0);
+	pImmediateContext->PSSetSamplers(0, 1, &m_pSamplerLinear);
+
+	pImmediateContext->DrawIndexed(vertToDraw, Start, 0);
+}
+
 void Appearance::SetTextures(ID3D11DeviceContext* pImmediateContext)
 {
 	pImmediateContext->PSSetShaderResources(0, 1, &m_pTextureResourceView);
@@ -280,6 +291,7 @@ HRESULT Appearance::initMesh(ID3D11Device* pd3dDevice, ID3D11DeviceContext* pCon
 	m_material.Material.HightScale = 0.1f;
 	m_material.Material.MaxLayers = 15.0f;
 	m_material.Material.MinLayers = 10.0f;
+
 	// Create the material constant buffer
 	bd.Usage = D3D11_USAGE_DEFAULT;
 	bd.ByteWidth = sizeof(MaterialPropertiesConstantBuffer);
@@ -428,6 +440,39 @@ HRESULT Appearance::initMeshFloor(ID3D11Device* pd3dDevice, ID3D11DeviceContext*
 		return hr;
 
 	return hr;
+}
+
+HRESULT Appearance::SetVertexBuffer(ID3D11Device* pd3dDevice, vector<SkinedVertex> Verts, UINT count)
+{
+	mVertexStride = sizeof(SkinedVertex);
+	D3D11_BUFFER_DESC bd = {};
+	bd.Usage = D3D11_USAGE_DEFAULT;
+	bd.ByteWidth = sizeof(SkinedVertex) * count;
+	bd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA InitData = {};
+	InitData.pSysMem = &Verts[0];
+	HRESULT hr = pd3dDevice->CreateBuffer(&bd, &InitData, &m_pVertexBuffer);
+	if (FAILED(hr))
+		return hr;
+}
+
+HRESULT Appearance::SetIndices(ID3D11Device* device, const USHORT* indices, UINT count)
+{
+	D3D11_BUFFER_DESC ibd;
+	ibd.Usage = D3D11_USAGE_DEFAULT;
+	ibd.ByteWidth = sizeof(USHORT) * count;
+	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	ibd.CPUAccessFlags = 0;
+	ibd.MiscFlags = 0;
+	ibd.StructureByteStride = 0;
+	
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = indices;
+
+	HRESULT HR = device->CreateBuffer(&ibd, &iinitData, &m_pIndexBuffer);
+	return HR;
 }
 
 

@@ -14,7 +14,7 @@ ShaderController::~ShaderController()
 HRESULT ShaderController::NewShader(string Name,const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
 {
 
-    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext,false);
+    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext, Layout::Defualt);
     if (FAILED(hr))
         return hr;
     
@@ -30,11 +30,11 @@ HRESULT ShaderController::NewShader(string Name,const WCHAR* szFileName, ID3D11D
     return S_OK;
 }
 
-HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext , bool instanced)
+HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext , Layout layout)
 {
     // Compile the vertex shader
     ID3DBlob* pVSBlob = nullptr;
-    HRESULT hr = CompileShaderFromFile(szFileName, "VS", "vs_4_0", &pVSBlob);
+    HRESULT hr = CompileShaderFromFile(szFileName, "VS", "vs_5_0", &pVSBlob);
     if (FAILED(hr))
     {
         MessageBox(nullptr,
@@ -52,26 +52,10 @@ HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* 
     }
     _pVertexShader = pVertexShader;
    
-    if (instanced) {
-        // Define the input layout
-        D3D11_INPUT_ELEMENT_DESC layout[] =
-        {
-            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0 , D3D11_INPUT_PER_INSTANCE_DATA, 1 },
-            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "tangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "biTangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            
-        };
-        UINT numElements = ARRAYSIZE(layout);
-        // Create the input layout
-        hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
-            pVSBlob->GetBufferSize(), &_pVertexLayout);
-        pVSBlob->Release();
-        if (FAILED(hr))
-            return hr;
-    }
-    else {
+    switch (layout)
+    {
+    case Layout::Defualt:
+    {
         // Define the input layout
         D3D11_INPUT_ELEMENT_DESC layout[] =
         {
@@ -81,17 +65,82 @@ HRESULT ShaderController::NewVertexShader(const WCHAR* szFileName,ID3D11Device* 
             { "tangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "biTangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
-        UINT numElements = ARRAYSIZE(layout); 
-        
-        // Create the input layout
-     hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
-        pVSBlob->GetBufferSize(), &_pVertexLayout);
-    pVSBlob->Release();
-    if (FAILED(hr))
-        return hr;
-    }
-   
+        UINT numElements = ARRAYSIZE(layout);
 
+        // Create the input layout
+        hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), &_pVertexLayout);
+        pVSBlob->Release();
+        if (FAILED(hr))
+            return hr;
+    }
+        break;
+    case Layout::Instance:
+    {
+        // Define the input layout
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0 , D3D11_INPUT_PER_INSTANCE_DATA, 1 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "tangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "biTangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+
+        };
+        UINT numElements = ARRAYSIZE(layout);
+        // Create the input layout
+        hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), &_pVertexLayout);
+        pVSBlob->Release();
+        if (FAILED(hr))
+            return hr;
+    }
+        break;
+    case Layout::Terrain:
+    {
+        // Define the input layout
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "BoundsY", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        };
+        UINT numElements = ARRAYSIZE(layout);
+
+        // Create the input layout
+        hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), &_pVertexLayout);
+        pVSBlob->Release();
+        if (FAILED(hr))
+            return hr;
+    }
+        break;
+    case Layout::Animation:
+    {
+        // Define the input layout
+        D3D11_INPUT_ELEMENT_DESC layout[] =
+        {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "tangent", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            {"WEIGHTS",      0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 48, D3D11_INPUT_PER_VERTEX_DATA, 0},
+            {"BONEINDICES",  0, DXGI_FORMAT_R32G32B32_FLOAT,   0, 60, D3D11_INPUT_PER_VERTEX_DATA, 0}
+        };
+        UINT numElements = ARRAYSIZE(layout);
+
+        // Create the input layout
+        hr = pd3dDevice->CreateInputLayout(layout, numElements, pVSBlob->GetBufferPointer(),
+            pVSBlob->GetBufferSize(), &_pVertexLayout);
+        pVSBlob->Release();
+        if (FAILED(hr))
+            return hr;
+    }
+    break;
+    default:
+        break;
+    }
+  
     // Set the input layout
     pImmediateContext->IASetInputLayout(_pVertexLayout);
 
@@ -103,7 +152,7 @@ HRESULT ShaderController::NewPixleShader(const WCHAR* szFileName,ID3D11Device* p
 {
     // Compile the pixel shader
     ID3DBlob* pPSBlob = nullptr;
-    HRESULT hr = CompileShaderFromFile(szFileName, "PS", "ps_4_0", &pPSBlob);
+    HRESULT hr = CompileShaderFromFile(szFileName, "PS", "ps_5_0", &pPSBlob);
     if (FAILED(hr))
     {
         MessageBox(nullptr,
@@ -152,7 +201,7 @@ HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileNa
 
     // Compile the vertex shader
     ID3DBlob* pVSBlob = nullptr;
-    HRESULT hr = CompileShaderFromFile(szFileName, "QuadVS", "vs_4_0", &pVSBlob);
+    HRESULT hr = CompileShaderFromFile(szFileName, "QuadVS", "vs_5_0", &pVSBlob);
     if (FAILED(hr))
     {
         MessageBox(nullptr,
@@ -174,8 +223,8 @@ HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileNa
     D3D11_INPUT_ELEMENT_DESC layout[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT , D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-    
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        
     };
     UINT numElements = ARRAYSIZE(layout);
 
@@ -190,7 +239,7 @@ HRESULT ShaderController::NewFullScreenShader(string Name, const WCHAR* szFileNa
  
     // Compile the pixel shader
     ID3DBlob* pPSBlob = nullptr;
-     hr = CompileShaderFromFile(szFileName, "QuadPS", "ps_4_0", &pPSBlob);
+     hr = CompileShaderFromFile(szFileName, "QuadPS", "ps_5_0", &pPSBlob);
     if (FAILED(hr))
     {
         MessageBox(nullptr,
@@ -236,7 +285,7 @@ ShaderData ShaderController::GetFullScreenShaderByNumber(int No)
 HRESULT ShaderController::NewGeoShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
 {
 
-    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext,true);
+    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext, Layout::Instance);
     if (FAILED(hr))
         return hr;
 
@@ -249,6 +298,49 @@ HRESULT ShaderController::NewGeoShader(string Name, const WCHAR* szFileName, ID3
         return hr;
 
     GeoShader = ShaderData(Name, _pVertexShader, _pPixelShader, _pVertexLayout, _pGeometryShader);
+    return S_OK;
+}
+
+HRESULT ShaderController::NewTessShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+    HRESULT hr;
+   
+
+    hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext, Layout::Terrain);
+    if (FAILED(hr))
+        return hr;
+     hr = NewHullShader(szFileName, pd3dDevice, pImmediateContext);
+        if (FAILED(hr))
+            return hr;
+     hr = NewDomianShader(szFileName, pd3dDevice, pImmediateContext);
+        if (FAILED(hr))
+            return hr;
+    hr = NewPixleShader(szFileName, pd3dDevice);
+    if (FAILED(hr))
+        return hr;
+
+     
+    
+
+    ShaderData NewShaderData = ShaderData(Name, _pVertexShader, _pPixelShader, _pVertexLayout,nullptr, _pHullShader, _pDomainShader);
+    _ShaderData.push_back(NewShaderData);
+    return hr;
+}
+
+HRESULT ShaderController::NewAnimationShader(string Name, const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+    HRESULT hr = NewVertexShader(szFileName, pd3dDevice, pImmediateContext, Layout::Animation);
+    if (FAILED(hr))
+        return hr;
+
+    hr = NewPixleShader(szFileName, pd3dDevice);
+    if (FAILED(hr))
+        return hr;
+
+    ShaderData NewShaderData = ShaderData(Name, _pVertexShader, _pPixelShader, _pVertexLayout);
+
+    _ShaderData.push_back(NewShaderData);
+
     return S_OK;
 }
 
@@ -314,7 +406,7 @@ HRESULT ShaderController::NewGeometryShader(const WCHAR* szFileName, ID3D11Devic
 {
     // Compile the vertex shader
     ID3DBlob* pVSBlob = nullptr;
-    HRESULT hr = CompileShaderFromFile(szFileName, "GS", "gs_4_0", &pVSBlob);
+    HRESULT hr = CompileShaderFromFile(szFileName, "GS", "gs_5_0", &pVSBlob);
     if (FAILED(hr))
     {
         MessageBox(nullptr,
@@ -333,6 +425,60 @@ HRESULT ShaderController::NewGeometryShader(const WCHAR* szFileName, ID3D11Devic
     _pGeometryShader = pGeoShader;
 
     
+
+    return hr;
+}
+
+HRESULT ShaderController::NewHullShader(const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+    // Compile the vertex shader
+    ID3DBlob* pVSBlob = nullptr;
+    HRESULT hr = CompileShaderFromFile(szFileName, "HS", "hs_5_0", &pVSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    ID3D11HullShader* pHullShader;
+    // Create the vertex shader
+    hr = pd3dDevice->CreateHullShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pHullShader);
+    if (FAILED(hr))
+    {
+        pVSBlob->Release();
+        return hr;
+    }
+    _pHullShader = pHullShader;
+
+
+
+    return hr;
+}
+
+HRESULT ShaderController::NewDomianShader(const WCHAR* szFileName, ID3D11Device* pd3dDevice, ID3D11DeviceContext* pImmediateContext)
+{
+    // Compile the vertex shader
+    ID3DBlob* pVSBlob = nullptr;
+    HRESULT hr = CompileShaderFromFile(szFileName, "DS", "ds_5_0", &pVSBlob);
+    if (FAILED(hr))
+    {
+        MessageBox(nullptr,
+            L"The FX file cannot be compiled.  Please run this executable from the directory that contains the FX file.", L"Error", MB_OK);
+        return hr;
+    }
+
+    ID3D11DomainShader* pDomainShader;
+    // Create the vertex shader
+    hr = pd3dDevice->CreateDomainShader(pVSBlob->GetBufferPointer(), pVSBlob->GetBufferSize(), nullptr, &pDomainShader);
+    if (FAILED(hr))
+    {
+        pVSBlob->Release();
+        return hr;
+    }
+    _pDomainShader = pDomainShader;
+
+
 
     return hr;
 }

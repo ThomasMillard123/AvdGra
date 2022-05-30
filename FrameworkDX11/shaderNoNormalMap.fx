@@ -367,7 +367,6 @@ float4 PS(PS_INPUT IN) : SV_TARGET
 	
 	float4 finalColor = (emissive + ambient + diffuse + specular) * texColor;
 	
-
 	return finalColor;
 }
 

@@ -93,6 +93,37 @@
     <ClCompile Include="ImGuiManager.cpp">
       <Filter>DImGUI</Filter>
     </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainAppearence.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainJsonLoad.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainVoxel.cpp">
+      <Filter>Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="DataStucts.cpp">
+      <Filter>Annimation</Filter>
+    </ClCompile>
+    <ClCompile Include="Bone.cpp">
+      <Filter>Annimation</Filter>
+    </ClCompile>
+    <ClCompile Include="M3dLoader.cpp">
+      <Filter>Annimation</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimatedModel.cpp">
+      <Filter>Annimation</Filter>
+    </ClCompile>
+    <ClCompile Include="RansterStateManager.cpp">
+      <Filter>UsefullFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="Skeleton.cpp">
+      <Filter>Annimation</Filter>
+    </ClCompile>
+    <ClCompile Include="PerlinNoise.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -193,6 +224,103 @@
     <ClInclude Include="ImGuiManager.h">
       <Filter>DImGUI</Filter>
     </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainAppearence.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\allocators.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\cursorstreamwrapper.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\document.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\encodedstream.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\encodings.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\filereadstream.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\filewritestream.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\fwd.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\istreamwrapper.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\memorybuffer.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\memorystream.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\ostreamwrapper.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\pointer.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\prettywriter.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\rapidjson.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\reader.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\schema.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\stream.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\stringbuffer.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\uri.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rapidjson\include\rapidjson\writer.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainJsonLoad.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FastNoiseLite-master\Cpp\FastNoiseLite.h">
+      <Filter>LibNoise</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainVoxel.h">
+      <Filter>Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStucts.h">
+      <Filter>Annimation</Filter>
+    </ClInclude>
+    <ClInclude Include="Bone.h">
+      <Filter>Annimation</Filter>
+    </ClInclude>
+    <ClInclude Include="M3dLoader.h">
+      <Filter>Annimation</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimatedModel.h">
+      <Filter>Annimation</Filter>
+    </ClInclude>
+    <ClInclude Include="RansterStateManager.h">
+      <Filter>UsefullFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="Skeleton.h">
+      <Filter>Annimation</Filter>
+    </ClInclude>
+    <ClInclude Include="PerlinNoise.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TextureLoading">
@@ -240,6 +368,18 @@
     <Filter Include="ShadowDepth">
       <UniqueIdentifier>{3e394d79-c64f-4a68-8437-39fc7746621d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Terrain">
+      <UniqueIdentifier>{47cc5ffd-4fea-4153-9310-6243ce166e99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Json">
+      <UniqueIdentifier>{24768ffc-733c-47de-bee5-2efd6913d785}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="LibNoise">
+      <UniqueIdentifier>{c317b88e-3eb3-49fa-bc02-63dc789b273e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Annimation">
+      <UniqueIdentifier>{dffeb552-c3c1-457a-b27b-1ca3813d6cb0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resources\stone.dds">
@@ -254,11 +394,6 @@
     <Image Include="Resources\bricks_TEX.dds">
       <Filter>Textures</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="shader.fx">
-      <Filter>Shaders</Filter>
-    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tutorial01.rc">
@@ -320,6 +455,21 @@
     <None Include="BillBord.fx">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="TerrainA.fx">
+      <Filter>Terrain</Filter>
+    </None>
+    <None Include="CubeVoxel.fx">
+      <Filter>Terrain</Filter>
+    </None>
+    <None Include="AnnimationShader.fx">
+      <Filter>Annimation</Filter>
+    </None>
+    <None Include="shader.fx">
+      <Filter>Shaders</Filter>
+    </None>
     <None Include="ClassDiagram.cd" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="assimp-vc142-mtd.lib" />
   </ItemGroup>
 </Project>

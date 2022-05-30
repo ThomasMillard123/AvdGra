@@ -92,31 +92,39 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
-    <IncludePath>$(SolutionDir)imgui-master;$(IncludePath)</IncludePath>
-    <LibraryPath>$(SolutionDir)imgui-master;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|X64'">
     <LinkIncremental>true</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
     <ExternalIncludePath>$(ExternalIncludePath)</ExternalIncludePath>
-    <IncludePath>$(ProjectDir);$(ProjectDir)Input;$(ProjectDir)SuportFiles;$(ProjectDir)Camera</IncludePath>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
-    <IncludePath>$(ProjectDir);$(ProjectDir)SuportFiles;$(ProjectDir)Input;$(ProjectDir)Camera;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Profile|X64'">
     <LinkIncremental>false</LinkIncremental>
     <GenerateManifest>true</GenerateManifest>
+    <IncludePath>$(SolutionDir)imgui-master;$(SolutionDir)rapidjson;$(SolutionDir)External;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -132,10 +140,12 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;dxguid.lib;winmm.lib;comctl32.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
@@ -144,6 +154,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -169,11 +180,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;dxguid.lib;winmm.lib;comctl32.lib;assimp-vc142-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <LargeAddressAware>true</LargeAddressAware>
@@ -182,7 +194,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -195,6 +207,10 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderType>
+      </ShaderType>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -209,10 +225,12 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;assimp-vc142-mtd.lib;;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -223,6 +241,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -236,7 +255,8 @@
       </Command>
     </PostBuildEvent>
     <FxCompile>
-      <ShaderType>Effect</ShaderType>
+      <ShaderType>
+      </ShaderType>
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|X64'">
@@ -251,10 +271,12 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -265,6 +287,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -277,6 +300,10 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderType>
+      </ShaderType>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Profile|Win32'">
     <ClCompile>
@@ -291,10 +318,12 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32;NDEBUG;PROFILE;_WINDOWS;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;assimp-vc142-mtd.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -305,6 +334,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -330,10 +360,12 @@
       <ExceptionHandling>Sync</ExceptionHandling>
       <PreprocessorDefinitions>WIN32;NDEBUG;PROFILE;_WINDOWS;_WIN32_WINNT=0x0600;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>Default</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)External;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalOptions> %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;assimp-vc142-mtd.lib;dxguid.lib;winmm.lib;comctl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -344,6 +376,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <UACExecutionLevel>AsInvoker</UACExecutionLevel>
       <DelayLoadDLLs>%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalLibraryDirectories>$(SolutionDir)/$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Manifest>
       <EnableDPIAwareness>PerMonitorHighDPIAware</EnableDPIAwareness>
@@ -356,20 +389,48 @@
       <Command>
       </Command>
     </PostBuildEvent>
+    <FxCompile>
+      <ShaderType>Effect</ShaderType>
+    </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\FastNoiseLite-master\Cpp\FastNoiseLite.h" />
     <ClInclude Include="..\imgui-master\backends\imgui_impl_dx11.h" />
     <ClInclude Include="..\imgui-master\backends\imgui_impl_win32.h" />
     <ClInclude Include="..\imgui-master\imconfig.h" />
     <ClInclude Include="..\imgui-master\imgui.h" />
     <ClInclude Include="..\imgui-master\imgui_internal.h" />
     <ClInclude Include="..\imgui-master\misc\cpp\imgui_stdlib.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\allocators.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\cursorstreamwrapper.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\document.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\encodedstream.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\encodings.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\filereadstream.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\filewritestream.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\fwd.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\istreamwrapper.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\memorybuffer.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\memorystream.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\ostreamwrapper.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\pointer.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\prettywriter.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\rapidjson.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\reader.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\schema.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\stream.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\stringbuffer.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\uri.h" />
+    <ClInclude Include="..\rapidjson\include\rapidjson\writer.h" />
+    <ClInclude Include="AnimatedModel.h" />
     <ClInclude Include="Appearance.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="BillboradObject.h" />
+    <ClInclude Include="Bone.h" />
     <ClInclude Include="C++HelperFunctions.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="DataStucts.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="DebugOutput.h" />
     <ClInclude Include="DrawableGameObject.h" />
@@ -379,17 +440,25 @@
     <ClInclude Include="KeyboardEvent.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="LightControll.h" />
+    <ClInclude Include="M3dLoader.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="MouseEvent.h" />
     <ClInclude Include="MouseInput.h" />
     <ClInclude Include="Mouse_Picking.h" />
+    <ClInclude Include="PerlinNoise.h" />
     <ClInclude Include="Quaternion.h" />
+    <ClInclude Include="RansterStateManager.h" />
     <ClInclude Include="RenderTargetControll.h" />
     <ClInclude Include="RenderTargetTextureClass.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="ShaderController.h" />
     <ClInclude Include="ShadowMap.h" />
+    <ClInclude Include="Skeleton.h" />
     <ClInclude Include="structures.h" />
+    <ClInclude Include="Terrain.h" />
+    <ClInclude Include="TerrainAppearence.h" />
+    <ClInclude Include="TerrainJsonLoad.h" />
+    <ClInclude Include="TerrainVoxel.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="Vector3.h" />
     <ResourceCompile Include="Tutorial01.rc" />
@@ -403,11 +472,14 @@
     <ClCompile Include="..\imgui-master\imgui_tables.cpp" />
     <ClCompile Include="..\imgui-master\imgui_widgets.cpp" />
     <ClCompile Include="..\imgui-master\misc\cpp\imgui_stdlib.cpp" />
+    <ClCompile Include="AnimatedModel.cpp" />
     <ClCompile Include="Appearance.cpp" />
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="BillboradObject.cpp" />
+    <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="DataStucts.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="DebugOutput.cpp" />
     <ClCompile Include="DrawableGameObject.cpp" />
@@ -417,14 +489,22 @@
     <ClCompile Include="KeyboardEvent.cpp" />
     <ClCompile Include="Light.cpp" />
     <ClCompile Include="LightControll.cpp" />
+    <ClCompile Include="M3dLoader.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MouseEvent.cpp" />
     <ClCompile Include="MouseInput.cpp" />
     <ClCompile Include="Mouse_Picking.cpp" />
+    <ClCompile Include="PerlinNoise.cpp" />
+    <ClCompile Include="RansterStateManager.cpp" />
     <ClCompile Include="RenderTargetControll.cpp" />
     <ClCompile Include="RenderTargetTextureClass.cpp" />
     <ClCompile Include="ShaderController.cpp" />
     <ClCompile Include="ShadowMap.cpp" />
+    <ClCompile Include="Skeleton.cpp" />
+    <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="TerrainAppearence.cpp" />
+    <ClCompile Include="TerrainJsonLoad.cpp" />
+    <ClCompile Include="TerrainVoxel.cpp" />
     <ClCompile Include="Transform.cpp" />
     <ClCompile Include="Vector3.cpp" />
   </ItemGroup>
@@ -436,6 +516,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
+    <None Include="TerrainA.fx">
+      <FileType>Document</FileType>
+    </None>
     <None Include="SolidColour.fx">
       <FileType>Document</FileType>
     </None>
@@ -466,9 +549,16 @@
     <None Include="BillBord.fx">
       <FileType>Document</FileType>
     </None>
-    <FxCompile Include="shader.fx">
+    <None Include="CubeVoxel.fx">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="AnnimationShader.fx">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="shader.fx">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </FxCompile>
+      <FileType>Document</FileType>
+    </None>
     <None Include="shaderParallaxOcShadingMapping.fx">
       <FileType>Document</FileType>
     </None>
@@ -493,6 +583,9 @@
     <None Include="shaderNoNormalMap.fx">
       <FileType>Document</FileType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="assimp-vc142-mtd.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
